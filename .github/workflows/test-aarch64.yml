@@ -16,7 +16,7 @@ jobs:
 
       - name: Install build deps
         run: |
-          pip install git+https://github.com/jonwright/c2py23.git
+          pip install c2py23==0.5.6
           pip install meson ninja numpy pytest "setuptools>=70.1" auditwheel
 
       - name: Regenerate lib/interface from C sources

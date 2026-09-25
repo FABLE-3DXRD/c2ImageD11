@@ -5,6 +5,7 @@ static int NOISY = 0;
 
 /* C2PY_BEGIN
  * {"py_sig": "sparse_connectedpixels_splat(v: buffer, i: buffer, j: buffer, th: float, lbl: buffer, Z: buffer, ni: int, nj: int) -> int",
+ *  "tags": ["Sparse"],
  *  "doc": "is for debugging/timing. It splats\nthe sparse array into a dense array and runs the old connectedpixels\ncode on that.",
  *  "params": {"v": "Values (float32).", "i": "Rows (uint16).", "j": "Cols (uint16).",
  *      "th": "Threshold.", "lbl": "Output labels.", "Z": "Temp buffer.", "ni": "Rows.", "nj": "Cols."},

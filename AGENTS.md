@@ -27,9 +27,12 @@ no reason to read or write them from Python.
 ## Current Status
 
 - Meson (in `lib/`) builds `_cImageD11.so` directly via `shared_module()`
-- c2py23 v0.2.0 handles fixed-width integer types and multi-dimensional
-  arrays (`double[3][3]`, `double[][3]`) natively
-- 56 tests pass (7 buffer + 49 equivalence including ImageD11 f2py comparison)
+- c2py23 **v0.5.6** handles fixed-width integer types and multi-dimensional
+  arrays (`double[3][3]`, `double[][3]`) natively, and emits decode-time
+  `TypeError`s naming the offending argument
+- 106 tests pass (52 equivalence vs ImageD11 f2py, 15 buffer, 16 geometry
+  precision, 8 typecheck, 5 type equivalence, 10 variants; 3 skipped for
+  functions absent in ImageD11 1.9.8)
 - Performance at parity with ImageD11 (e.g. `compute_geometry` 0.97x of f2py at n=200)
 - Tested on Python 3.12; targets Python 2.7-3.14
 
@@ -279,7 +282,9 @@ is deferred.
 - **Windows CI:** MSVC build via vswhere+vcvars64, CC=cl, produces
   `_cImageD11_AMD64.pyd`. Linux test matrix 3.8-3.13, Windows 3.10-3.13.
 - **Compiler warnings:** all fixed (RAD/DEG, printf %td, explicit casts).
-- **c2py23 HEAD tracking:** regenerated wrappers committed in git, un-pinned.
+- **c2py23 pinned to v0.5.6:** CI installs `c2py23==0.5.6` (from PyPI); the
+  release includes the decode-time dtype-error fix; regenerated wrappers
+  committed in git.
 
 ## Build copy step
 

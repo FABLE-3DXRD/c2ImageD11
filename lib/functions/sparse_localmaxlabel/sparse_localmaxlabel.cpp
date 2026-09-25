@@ -2,6 +2,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "sparse_localmaxlabel(v: buffer, i: buffer, j: buffer, MV: buffer, iMV: buffer, labels: buffer) -> int",
+ *  "tags": ["Peak labelling", "Sparse"],
  *  "doc": "assigns labels to sparse array in sorted coo format\nsupplied in (v,(i,j)). MV and iMV are temporaries.\nsingle threaded",
  *  "params": {"v": "Values (float32).", "i": "Rows (uint16).", "j": "Cols (uint16).",
  *      "MV": "Temp float32.", "iMV": "Temp int32.", "labels": "Output labels (int32)."},

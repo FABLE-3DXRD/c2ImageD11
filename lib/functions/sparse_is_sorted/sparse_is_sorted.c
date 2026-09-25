@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "sparse_is_sorted(i: buffer, j: buffer) -> int",
+ *  "tags": ["Sparse"],
  *  "doc": "checks whether the indices in i and j of a sparse\ncoo format come in the order that they would appear inside an image\n*  @param i, j index arrays\n*  @param nnz dimension of i, j\n   returns 0 for all OK\n        k for first non-sorted element\n        -k for first duplicate",
  *  "params": {"i": "Row indices (uint16).", "j": "Col indices (uint16)."},
  *  "checks": ["i.slow_axis == 0",

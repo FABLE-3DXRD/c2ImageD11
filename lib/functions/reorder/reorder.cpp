@@ -2,6 +2,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "reorder_f32_a32(data: buffer, adr: buffer, out: buffer) -> void",
+ *  "tags": ["Array operations"],
  *  "doc": "called in sandbox/fazit.py simple\nloop with openmp saying out[adr[i]] in data[i]\ne.g. semi-random writing",
  *  "checks": ["data.format == 'f'", "adr.format == 'I' or adr.itemsize == 4",
  *      "adr.n == data.n", "out.format == 'f'", "out.n >= data.n"],
@@ -18,6 +19,7 @@ extern "C" void reorder_f32_a32(const float * data, const uint32_t * adr,
 
 /* C2PY_BEGIN
  * {"py_sig": "reorder_u16_a32(data: buffer, adr: buffer, out: buffer) -> void",
+ *  "tags": ["Array operations"],
  *  "doc": "called in sandbox/fazit.py simple\nloop with openmp saying out[adr[i]] in data[i]\ne.g. semi-random writing",
  *  "checks": ["data.format == 'H' or data.itemsize == 2", "adr.format == 'I' or adr.itemsize == 4",
  *      "adr.n == data.n", "out.format == 'H' or out.itemsize == 2", "out.n >= data.n"],

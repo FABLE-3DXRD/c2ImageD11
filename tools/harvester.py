@@ -152,7 +152,9 @@ def find_cpp_sources(src_dir):
             return 1
         return 0
     
-    sources.sort(key=_isa_priority)
+    # Deterministic: same as find_c_sources -- alphabetical tiebreak so
+    # regeneration is identical regardless of os.walk directory order.
+    sources.sort(key=lambda f: (_isa_priority(f), f))
     return sources
 
 

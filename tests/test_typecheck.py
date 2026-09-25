@@ -44,7 +44,7 @@ def test_score_rejects_int_gv():
     """score() given int gv raises an error (no matching overload)."""
     ubi = np.eye(3, dtype=np.float64)
     gv = np.random.randint(0, 10, size=(10, 3))
-    with pytest.raises((ValueError, SystemError)):
+    with pytest.raises((ValueError, TypeError)):
         c2ImageD11.score(ubi, gv, 0.5)
 
 
@@ -53,6 +53,20 @@ def test_score_rejects_1d_ubi():
     gv = np.random.randn(10, 3).astype(np.float64)
     with pytest.raises(ValueError):
         c2ImageD11.score(np.ones(9), gv, 0.5)
+
+
+def test_localmaxlabel_rejects_float64_with_arg_info():
+    """localmaxlabel() with float64 data raises TypeError naming the arg,
+    its 1-based position, and the received PEP 3118 format."""
+    img = np.random.poisson(3, (21, 21)).astype(np.float64)
+    labels = np.zeros(img.shape, np.int32)
+    wrk = np.zeros(img.shape, np.uint8)
+    with pytest.raises(TypeError) as exc:
+        c2ImageD11.localmaxlabel(img, labels, wrk)
+    msg = str(exc.value)
+    assert "argument 1" in msg
+    assert "(data)" in msg
+    assert "has unsupported format 'd'" in msg
 
 
 def test_score_and_refine_soa_via_T():

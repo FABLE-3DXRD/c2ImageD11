@@ -4,6 +4,7 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "misori_monoclinic(u1: buffer, u2: buffer) -> float",
+ *     "tags": ["Crystallography"],
  *     "doc": "assumes a unique b axis and only checks\nthe flip of b -> -b\nNot sure about the point group here. Is is 2/m  ??\n Beware: work in progress",
  *     "params": {
  *         "u1": "Orientation matrix U (9-element flattened double).",

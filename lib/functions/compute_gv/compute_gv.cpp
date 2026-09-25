@@ -4,6 +4,8 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "compute_gv(xlylzl: buffer, omega: buffer, omegasign: float, wvln: float, wedge: float, chi: float, t: buffer, gv: buffer) -> void",
+ *     "tags": ["Scattering geometry"],
+ *     "layout": "xlylzl and gv accept (n,3) AoS or (3,n) SoA",
  *     "doc": "computes scattering vectors given thr positions of the spot\nin the laboratory in xlylzl[npks], the omega rotation[npks], and\nthe rest of the parameters (wedge,wvln,chi,t[3] and omegasign)",
  *     "params": {
  *         "xlylzl": "Spot positions in lab frame, (n,3) AoS or (3,n) SoA.",
@@ -78,6 +80,8 @@ extern "C" void compute_gv_soa_f32(const float xlylzl[], const float omega[],
 /* C2PY_BEGIN
  * {
  *     "py_sig": "compute_gv_soa(xl: buffer, yl: buffer, zl: buffer, omega: buffer, omegasign: float, wvln: float, wedge: float, chi: float, t: buffer, gx: buffer, gy: buffer, gz: buffer) -> void",
+ *     "tags": ["Scattering geometry"],
+ *     "layout": "split SoA: separate xl, yl, zl inputs and gx, gy, gz outputs",
  *     "c_overloads": [
  *         {
  *             "when": "xl.format == 'd' and yl.format == 'd' and zl.format == 'd' and omega.format == 'd' and gx.format == 'd' and gy.format == 'd' and gz.format == 'd' and xl.n == yl.n and yl.n == zl.n and zl.n == omega.n and omega.n == gx.n and gx.n == gy.n and gy.n == gz.n",

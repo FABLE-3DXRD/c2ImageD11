@@ -12,6 +12,7 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "cimaged11_omp_set_num_threads(n: int) -> void",
+ *     "tags": ["Runtime"],
  *     "doc": "Sets the openmp number of\nthreads to use.\nChange if you use multiprocessing or do not like\nos.environ['OMP_NUM_THREADS']\nsee also: multiprocessing.cpu_count(),\nsee also os.cpu_count()\nsee docs/sphx/parallel.rst",
  *     "params": {
  *         "n": "Number of OpenMP threads. Pass 1 for single-threaded execution.",
@@ -35,6 +36,7 @@ int cimaged11_omp_get_max_threads(void) { return 0; }
 /* C2PY_BEGIN
  * {
  *     "py_sig": "cimaged11_omp_get_max_threads() -> int",
+ *     "tags": ["Runtime"],
  *     "doc": "Return the maximum number of OpenMP threads available.",
  *     "c_overloads": [{
  *         "sig": "int cimaged11_omp_get_max_threads()",
@@ -51,6 +53,7 @@ static int _c2py_omp_min_ng = 10000;
 /* C2PY_BEGIN
  * {
  *     "py_sig": "cimaged11_omp_get_min_ng() -> int",
+ *     "tags": ["Runtime"],
  *     "doc": "Return the minimum number of g-vectors before the score family\nparallelizes with OpenMP.",
  *     "c_overloads": [{
  *         "sig": "int cimaged11_omp_get_min_ng()",
@@ -63,6 +66,7 @@ int cimaged11_omp_get_min_ng(void) { return _c2py_omp_min_ng; }
 /* C2PY_BEGIN
  * {
  *     "py_sig": "cimaged11_omp_set_min_ng(n: int) -> void",
+ *     "tags": ["Runtime"],
  *     "doc": "Set the minimum number of g-vectors before the score family\nparallelizes with OpenMP.  Negative values are clamped to 0.",
  *     "params": {
  *         "n": "Minimum ng.  Pass 0 to always parallelize (with >1 thread);\npass a huge value to force single-threaded.",
@@ -190,6 +194,7 @@ int neighbormax(const float *restrict im, int32_t *restrict lout,
 /* C2PY_BEGIN
  * {
  *     "py_sig": "verify_rounding(n: int) -> int",
+ *     "tags": ["Runtime"],
  *     "doc": "checks the round to nearest int code is correct",
  *     "params": {
  *         "n": "ask jon about this parameter",

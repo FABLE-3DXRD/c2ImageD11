@@ -12,7 +12,8 @@ jobs:
       - name: Setup Python and install build deps
         run: |
           export PATH="/opt/python/cp312-cp312/bin:$PATH"
-          pip install git+https://github.com/jonwright/c2py23.git
+          # c2py23 0.5.6 includes the decode-time dtype-error fix (issue #37).
+          pip install c2py23==0.5.6
           pip install meson ninja setuptools auditwheel
           echo "PATH=/opt/python/cp312-cp312/bin:$PATH" >> "$GITHUB_ENV"
 
