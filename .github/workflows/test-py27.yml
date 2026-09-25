@@ -19,7 +19,7 @@ jobs:
 
       - name: Install build deps
         run: |
-          python3 -m pip install "setuptools>=70.1" "packaging>=24.2" meson ninja auditwheel
+          python3 -m pip install "setuptools>=70.1" "packaging>=24.2" meson ninja auditwheel "patchelf>=0.14.5"
           python2 -m pip install numpy==1.16.6 "pytest>=4.6,<5" wheel
 
       - name: Build _cImageD11.so

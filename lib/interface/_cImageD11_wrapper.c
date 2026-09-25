@@ -20995,9 +20995,9 @@ _blobproperties_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_data.format ? info_data.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_data.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_data.itemsize == 4) && c2py_format_is_native(info_data.format))) {
             PyErr_Format(PyExc_TypeError,
-                "blobproperties: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "blobproperties: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -21116,9 +21116,9 @@ _blobproperties_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t nargs
     {
         const char *_fmt = info_data.format ? info_data.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_data.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_data.itemsize == 4) && c2py_format_is_native(info_data.format))) {
             PyErr_Format(PyExc_TypeError,
-                "blobproperties: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "blobproperties: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -26017,9 +26017,9 @@ _connectedpixels_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_data.format ? info_data.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_data.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_data.itemsize == 4) && c2py_format_is_native(info_data.format))) {
             PyErr_Format(PyExc_TypeError,
-                "connectedpixels: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "connectedpixels: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -26117,9 +26117,9 @@ _connectedpixels_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t narg
     {
         const char *_fmt = info_data.format ? info_data.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_data.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_data.itemsize == 4) && c2py_format_is_native(info_data.format))) {
             PyErr_Format(PyExc_TypeError,
-                "connectedpixels: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "connectedpixels: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -26420,9 +26420,9 @@ _localmaxlabel_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_data.format ? info_data.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_data.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_data.itemsize == 4) && c2py_format_is_native(info_data.format))) {
             PyErr_Format(PyExc_TypeError,
-                "localmaxlabel: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "localmaxlabel: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -26522,9 +26522,9 @@ _localmaxlabel_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
     {
         const char *_fmt = info_data.format ? info_data.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_data.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_data.itemsize == 4) && c2py_format_is_native(info_data.format))) {
             PyErr_Format(PyExc_TypeError,
-                "localmaxlabel: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "localmaxlabel: argument 1 (data) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -26854,9 +26854,9 @@ _make_clean_mask_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_img.format ? info_img.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_img.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_img.itemsize == 4) && c2py_format_is_native(info_img.format))) {
             PyErr_Format(PyExc_TypeError,
-                "make_clean_mask: argument 1 (img) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "make_clean_mask: argument 1 (img) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -26963,9 +26963,9 @@ _make_clean_mask_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t narg
     {
         const char *_fmt = info_img.format ? info_img.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_img.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_img.itemsize == 4) && c2py_format_is_native(info_img.format))) {
             PyErr_Format(PyExc_TypeError,
-                "make_clean_mask: argument 1 (img) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "make_clean_mask: argument 1 (img) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -27682,9 +27682,9 @@ _reorder_u16_a32_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_adr.format ? info_adr.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'I') && c2py_format_is_native(info_adr.format))) {
+        if (_fmt[0] && !((_last == 'I' || info_adr.itemsize == 4) && c2py_format_is_native(info_adr.format))) {
             PyErr_Format(PyExc_TypeError,
-                "reorder_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I",
+                "reorder_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -27772,9 +27772,9 @@ _reorder_u16_a32_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t narg
     {
         const char *_fmt = info_adr.format ? info_adr.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'I') && c2py_format_is_native(info_adr.format))) {
+        if (_fmt[0] && !((_last == 'I' || info_adr.itemsize == 4) && c2py_format_is_native(info_adr.format))) {
             PyErr_Format(PyExc_TypeError,
-                "reorder_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I",
+                "reorder_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -28476,9 +28476,9 @@ _reorderlut_u16_a32_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_adr.format ? info_adr.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'I') && c2py_format_is_native(info_adr.format))) {
+        if (_fmt[0] && !((_last == 'I' || info_adr.itemsize == 4) && c2py_format_is_native(info_adr.format))) {
             PyErr_Format(PyExc_TypeError,
-                "reorderlut_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I",
+                "reorderlut_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -28566,9 +28566,9 @@ _reorderlut_u16_a32_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t n
     {
         const char *_fmt = info_adr.format ? info_adr.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'I') && c2py_format_is_native(info_adr.format))) {
+        if (_fmt[0] && !((_last == 'I' || info_adr.itemsize == 4) && c2py_format_is_native(info_adr.format))) {
             PyErr_Format(PyExc_TypeError,
-                "reorderlut_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I",
+                "reorderlut_u16_a32: argument 2 (adr) has unsupported format '%s'; expected formats: I; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -28959,9 +28959,9 @@ _sparse_connectedpixels_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_v.format ? info_v.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_v.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_v.itemsize == 4) && c2py_format_is_native(info_v.format))) {
             PyErr_Format(PyExc_TypeError,
-                "sparse_connectedpixels: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "sparse_connectedpixels: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -29077,9 +29077,9 @@ _sparse_connectedpixels_fastcall(PyObject *self, PyObject *const *args, Py_ssize
     {
         const char *_fmt = info_v.format ? info_v.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_v.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_v.itemsize == 4) && c2py_format_is_native(info_v.format))) {
             PyErr_Format(PyExc_TypeError,
-                "sparse_connectedpixels: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "sparse_connectedpixels: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -29614,9 +29614,9 @@ _sparse_localmaxlabel_wrapper(PyObject *self, PyObject *args)
     {
         const char *_fmt = info_v.format ? info_v.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_v.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_v.itemsize == 4) && c2py_format_is_native(info_v.format))) {
             PyErr_Format(PyExc_TypeError,
-                "sparse_localmaxlabel: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "sparse_localmaxlabel: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
@@ -29851,9 +29851,9 @@ _sparse_localmaxlabel_fastcall(PyObject *self, PyObject *const *args, Py_ssize_t
     {
         const char *_fmt = info_v.format ? info_v.format : "";
         char _last = _fmt[0] ? _fmt[strlen(_fmt) - 1] : 0;
-        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f') && c2py_format_is_native(info_v.format))) {
+        if (_fmt[0] && !((_last == 'B' || _last == 'H' || _last == 'I' || _last == 'L' || _last == 'f' || info_v.itemsize == 4) && c2py_format_is_native(info_v.format))) {
             PyErr_Format(PyExc_TypeError,
-                "sparse_localmaxlabel: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f",
+                "sparse_localmaxlabel: argument 1 (v) has unsupported format '%s'; expected formats: B, H, I, L, f; or itemsize in (4)",
                 _fmt);
             goto cleanup;
         }
