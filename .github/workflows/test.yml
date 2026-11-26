@@ -12,7 +12,9 @@ jobs:
       - name: Setup Python and install build deps
         run: |
           export PATH="/opt/python/cp312-cp312/bin:$PATH"
-          pip install git+https://github.com/jonwright/c2py23.git
+          # Pinned: CI regenerates lib/interface, so it must use the same
+          # c2py23 release as the checked-in files.  Bump both together.
+          pip install c2py23==0.6.1
           pip install meson ninja setuptools auditwheel
           echo "PATH=/opt/python/cp312-cp312/bin:$PATH" >> "$GITHUB_ENV"
 
@@ -53,7 +55,8 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-    runs-on: ubuntu-latest
+    # ubuntu-latest (26.04) has no setup-python builds of 3.8 / 3.9
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -86,6 +89,8 @@ jobs:
 
       - name: Run tests
         run: |
+          # fail here rather than let test_equivalence.py skip itself
+          python -c "import ImageD11._cImageD11"
           cd "$(mktemp -d)" && python -m pytest "$GITHUB_WORKSPACE/tests/" -v
 
       - name: Verify docs integrity
@@ -180,6 +185,8 @@ jobs:
 
       - name: Run tests
         run: |
+          rem fail here rather than let test_equivalence.py skip itself
+          python -c "import ImageD11._cImageD11" || exit /b 1
           move %GITHUB_WORKSPACE%\c2ImageD11\__init__.py %GITHUB_WORKSPACE%\c2ImageD11\__init__.py.bak
           cd %TEMP% && python -m pytest %GITHUB_WORKSPACE%\tests\ -v
 

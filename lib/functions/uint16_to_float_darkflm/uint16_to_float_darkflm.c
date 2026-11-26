@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "uint16_to_float_darkflm(img: buffer, drk: buffer, flm: buffer, data: buffer) -> void",
+ *  "tags": ["Image corrections"],
  *  "doc": "subtracts image drk(float32) from\nraw data in data (uint16), multiples by flm(float32) and returns in img.",
  *  "checks": ["img.format == 'f'", "drk.format == 'f'", "drk.n == img.n",
  *      "flm.format == 'f'", "flm.n == img.n",

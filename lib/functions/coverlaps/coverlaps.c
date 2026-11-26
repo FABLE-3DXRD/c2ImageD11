@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "coverlaps(row1: buffer, col1: buffer, labels1: buffer, row2: buffer, col2: buffer, labels2: buffer, mat: buffer, results: buffer) -> int",
+ *  "tags": ["Sparse", "Peak labelling"],
  *  "doc": "Determine overlapping labels between two sparse frames.",
  *  "params": {"row1": "Rows 1 (uint16).", "col1": "Cols 1 (uint16).", "labels1": "Labels 1 (int32).",
  *      "row2": "Rows 2 (uint16).", "col2": "Cols 2 (uint16).", "labels2": "Labels 2 (int32).",

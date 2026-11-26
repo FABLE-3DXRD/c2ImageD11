@@ -23,66 +23,91 @@ FUNC_DIR = os.path.join(HERE, "lib", "functions")
 API_DIR = os.path.join(HERE, "docs", "api")
 BENCH_DIR = os.path.join(HERE, "docs", "bench")
 
+# Order in which categories appear in the API index / mkdocs nav.
+BROWSE_CATEGORIES = [
+    "Image corrections",
+    "Peak labelling",
+    "Sparse",
+    "Scattering geometry",
+    "Indexing",
+    "Crystallography",
+    "Array operations",
+    "Runtime",
+]
 
-def _find_c2py_begin_doc(source_path):
-    """Extract 'doc' and 'params' from the first C2PY_BEGIN block in a .c file."""
-    if not os.path.exists(source_path):
-        return "", {}
-    with open(source_path) as f:
-        text = f.read()
-
-    begin_re = re.compile(r"C2PY_BEGIN")
-    end_re = re.compile(r"C2PY_END")
-    lines = text.splitlines(True)
-    i = 0
-    while i < len(lines):
-        if begin_re.search(lines[i]):
-            i += 1
-            content_lines = []
-            while i < len(lines) and not end_re.search(lines[i]):
-                content_lines.append(lines[i])
-                i += 1
-            comment_prefix = re.compile(r"^\s*\*\s?")
-            cleaned = []
-            for ln in content_lines:
-                s = ln.rstrip("\n\r")
-                s = comment_prefix.sub("", s, count=1)
-                cleaned.append(s)
-            block_text = "\n".join(cleaned).strip()
-            if block_text:
-                block_text = re.sub(r"(?<=[\s,\[{:])true(?=\s*[\s,\]\}:])", "True", block_text)
-                block_text = re.sub(r"(?<=[\s,\[{:])false(?=\s*[\s,\]\}:])", "False", block_text)
-                try:
-                    obj = ast.literal_eval(block_text)
-                    if "py_sig" not in obj:
-                        continue
-                    doc = obj.get("doc", "")
-                    params = obj.get("params", {})
-                    checks = obj.get("checks", [])
-                    return doc, params, checks
-                except (ValueError, SyntaxError):
-                    pass
-            if i < len(lines):
-                i += 1
-        else:
-            i += 1
-    return "", {}, []
+# Guide page that explains the AoS vs SoA layout convention.  A function
+# whose C2PY_BEGIN block has a "layout" key gets a reference to this page.
+LAYOUT_GUIDE = "guide/layout.md"
 
 
-def _find_c_sources():
-    """Map function names to their PRIMARY .c source file (not stubs/variants)."""
-    name_to_path = {}
+def _load_function_meta():
+    """Map exported function name -> metadata from its primary C2PY_BEGIN block.
+
+    Scans every .c/.cpp C2PY_BEGIN block and, for each function name, prefers
+    the block that carries a 'doc'/'params' (the descriptive primary block)
+    over bare variant blocks. Returns {name: {"doc", "params", "checks",
+    "tags", "layout", "path"}}.
+    """
+    import ast
+
+    result = {}
     for root, dirs, files in os.walk(FUNC_DIR):
-        dir_name = os.path.basename(root)
         for f in sorted(files):
-            if f.endswith(".c") and not f.startswith("."):
-                fp = os.path.join(root, f)
-                c_file = f.replace(".c", "")
-                # Map the directory name to the file that MATCHES the directory
-                # (e.g., score/score.c, not score/score_stubs.c or score/score_f64_avx2.cpp)
-                if c_file == dir_name:
-                    name_to_path[dir_name] = fp
-    return name_to_path
+            if not f.endswith((".c", ".cpp")):
+                continue
+            fp = os.path.join(root, f)
+            with open(fp) as fh:
+                text = fh.read()
+            begin_re = re.compile(r"C2PY_BEGIN")
+            end_re = re.compile(r"C2PY_END")
+            lines = text.splitlines(True)
+            i = 0
+            while i < len(lines):
+                if begin_re.search(lines[i]):
+                    i += 1
+                    content_lines = []
+                    while i < len(lines) and not end_re.search(lines[i]):
+                        content_lines.append(lines[i])
+                        i += 1
+                    comment_prefix = re.compile(r"^\s*\*\s?")
+                    cleaned = []
+                    for ln in content_lines:
+                        s = ln.rstrip("\n\r")
+                        s = comment_prefix.sub("", s, count=1)
+                        cleaned.append(s)
+                    block_text = "\n".join(cleaned).strip()
+                    if block_text:
+                        block_text = re.sub(r"(?<=[\s,\[{:])true(?=\s*[\s,\]\}:])", "True", block_text)
+                        block_text = re.sub(r"(?<=[\s,\[{:])false(?=\s*[\s,\]\}:])", "False", block_text)
+                        try:
+                            obj = ast.literal_eval(block_text)
+                        except (ValueError, SyntaxError):
+                            obj = None
+                        if isinstance(obj, dict) and "py_sig" in obj:
+                            m = re.match(r"(\w+)\(", obj["py_sig"])
+                            name = m.group(1) if m else None
+                            if not name:
+                                continue
+                            entry = {
+                                "doc": obj.get("doc", ""),
+                                "params": obj.get("params", {}),
+                                "checks": obj.get("checks", []),
+                                "tags": obj.get("tags", []),
+                                "layout": obj.get("layout", ""),
+                                "path": fp,
+                            }
+                            prev = result.get(name)
+                            if prev is None:
+                                result[name] = entry
+                            else:
+                                # Prefer the block that carries descriptive doc/params.
+                                if (entry["doc"] or entry["params"]) and not (prev["doc"] or prev["params"]):
+                                    result[name] = entry
+                    if i < len(lines):
+                        i += 1
+                else:
+                    i += 1
+    return result
 
 
 def _gen_cpu_features_page():
@@ -330,14 +355,44 @@ def _get_version():
     return version, short_sha, full_sha
 
 
-def _build_module_toc(functions):
-    """Return a markdown table-of-contents listing all functions."""
+def _build_module_toc(functions, meta=None):
+    """Return a grouped table-of-contents, one section per category.
+
+    A function can belong to several categories and appears under each.
+    Functions without a known tag fall into an "Uncategorized" section.
+    """
+    meta = meta or _load_function_meta()
     lines = ["# API Index", ""]
     lines.append("{} C functions exported by `c2ImageD11`.".format(len(functions)))
     lines.append("")
+    lines.append("Grouped by theme. A function may appear in more than one category.")
+    lines.append("")
+
+    def _tags(name):
+        entry = meta.get(name)
+        return list(entry.get("tags") or []) if entry else []
+
+    known = set(BROWSE_CATEGORIES)
+    # Assign each function to its categories (plus an implicit "Uncategorized").
+    buckets = {}
     for name in sorted(functions):
-        lines.append("- [{}]({}.md)".format(name, name))
+        tags = [t for t in _tags(name) if t in known]
+        if not tags:
+            tags = ["Uncategorized"]
+        for t in tags:
+            buckets.setdefault(t, []).append(name)
+
+    for cat in list(BROWSE_CATEGORIES) + ["Uncategorized"]:
+        names = buckets.get(cat)
+        if not names:
+            continue
+        lines.append("## {0}".format(cat))
+        lines.append("")
+        for name in sorted(names):
+            lines.append("- [{}]({}.md)".format(name, name))
+        lines.append("")
     return "\n".join(lines)
+
 
 
 def generate(dry_run=False):
@@ -360,7 +415,7 @@ def generate(dry_run=False):
                        and n not in skip
                        and callable(getattr(mod, n, None)))
 
-    source_map = _find_c_sources()
+    meta = _load_function_meta()
     c2py_data = _load_c2py_data()
     version, short_sha, full_sha = _get_version()
     pages = {}
@@ -372,10 +427,24 @@ def generate(dry_run=False):
             lines.append(sig_line)
             lines.append("")
 
+        entry = meta.get(name)
+        if entry is not None:
+            tags = entry.get("tags") or []
+            layout = entry.get("layout") or ""
+            if tags:
+                lines.append("**Categories:** " + ", ".join("`{}`".format(t) for t in tags))
+                lines.append("")
+            if layout:
+                lines.append(
+                    "**Layout:** {}  "
+                    "See [AoS/SoA guide]({}).".format(layout, LAYOUT_GUIDE))
+                lines.append("")
+
         # Description and params from C2PY_BEGIN
-        src_path = source_map.get(name)
-        if src_path:
-            doc, params, checks = _find_c2py_begin_doc(src_path)
+        if entry is not None:
+            doc = entry.get("doc") or ""
+            params = entry.get("params") or {}
+            checks = entry.get("checks") or []
             if doc:
                 lines.append("## Description")
                 lines.append("")
@@ -440,7 +509,7 @@ def generate(dry_run=False):
         print("  Wrote {} function pages to {} (version {})".format(len(pages), API_DIR, version_line))
 
     # API index
-    index_content = _build_module_toc(functions)
+    index_content = _build_module_toc(functions, meta)
     if dry_run:
         print("  Dry run: would write API index")
     else:
@@ -461,13 +530,32 @@ def generate(dry_run=False):
     return len(pages)
 
 
-def write_mkdocs_nav(functions):
-    """Write docs/mkdocs.yml with proper nav from function list."""
+def write_mkdocs_nav(functions, meta=None):
+    """Write docs/mkdocs.yml with a category-grouped nav from the function list."""
+    meta = meta or _load_function_meta()
     version, short_sha, full_sha = _get_version()
-    api_pages = ["- API Index: api/index.md"]
-    api_pages.append("- CPU Features: api/cpu.md")
+
+    def _tags(name):
+        entry = meta.get(name)
+        return list(entry.get("tags") or []) if entry else []
+
+    known = set(BROWSE_CATEGORIES)
+    buckets = {}
     for name in sorted(functions):
-        api_pages.append("- {}: api/{}.md".format(name, name))
+        tags = [t for t in _tags(name) if t in known]
+        if not tags:
+            tags = ["Uncategorized"]
+        for t in tags:
+            buckets.setdefault(t, []).append(name)
+
+    api_pages = ["- API Index: api/index.md", "- CPU Features: api/cpu.md"]
+    for cat in list(BROWSE_CATEGORIES) + ["Uncategorized"]:
+        names = buckets.get(cat)
+        if not names:
+            continue
+        sub = ["    - {}: api/{}.md".format(n, n) for n in sorted(names)]
+        api_pages.append("- {}:".format(cat))
+        api_pages.extend(sub)
 
     nav = """site_name: c2ImageD11
 site_description: Standalone C extensions for ImageD11 (c2py23 binding) -- v{} ({})
@@ -510,6 +598,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Guide:
+    - AoS vs SoA Layout: guide/layout.md
     - ISA Variants: guide/variants.md
     - Compiler Selection: guide/compiler.md
   - API Reference:
@@ -543,7 +632,7 @@ def main():
                            if not n.startswith("_")
                            and n not in skip
                            and callable(getattr(mod, n, None)))
-        write_mkdocs_nav(functions)
+        write_mkdocs_nav(functions, _load_function_meta())
 
     print("Done: {} functions documented".format(count))
 

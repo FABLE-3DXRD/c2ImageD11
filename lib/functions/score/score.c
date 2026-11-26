@@ -4,6 +4,8 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "score(ubi: buffer, gv: buffer, tol: float) -> int",
+ *     "tags": ["Indexing", "Scattering geometry"],
+ *     "layout": "gv accepts (ng,3) AoS or (3,ng) SoA",
  *     "doc": "takes a ubi matrix and list of g-vectors and computes\nhkl = dot(ubi, gv), then rounds these g-vectors to integer\nand computes drlv2 = (h-int(h))**2 + (k-int(k))**2 + (l-int(l))**2\nIf drlv2 is less than tol*tol then the peak is considered to\nbe indexed. Returns the number of peaks found.",
  *     "params": {
  *         "ubi": "Orientation matrix UBI (UB inverse), shape (9,) flattened double.",

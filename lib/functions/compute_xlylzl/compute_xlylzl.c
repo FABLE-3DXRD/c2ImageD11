@@ -5,6 +5,7 @@ static int NOISY = 0;
 /* C2PY_BEGIN
  * {
  *     "py_sig": "compute_xlylzl(s: buffer, f: buffer, p: buffer, r: buffer, dist: buffer, xlylzl: buffer) -> void",
+ *     "tags": ["Scattering geometry"],
  *     "doc": "compute_xlylzl finds spot positions in the laboratory frame using packed parameters.",
  *     "params": {
  *         "s": "Slow-scan pixel positions (double).",

@@ -5,6 +5,8 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "score_and_refine(ubi: buffer, gv: buffer, tol: float) -> int",
+ *     "tags": ["Indexing", "Scattering geometry"],
+ *     "layout": "gv accepts (ng,3) AoS or (3,ng) SoA; ubi is a 3x3 matrix",
  *     "doc": "is very similar to score but it also refines the UB\nmatrix using the assigned peaks and overwrite the argument.\nIt returns the number of peaks and fit prior to refinement.",
  *     "params": {
  *         "ubi": "Orientation matrix UBI (9-element flattened double).",

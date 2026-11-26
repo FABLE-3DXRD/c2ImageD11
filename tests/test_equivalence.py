@@ -221,8 +221,50 @@ class TestScoreAndAssign:
         assert (labels_o == labels_n).all()
 
 
+def _refine_assigned_ref(ubi, gv, labels, label):
+    """numpy version of refine_assigned (lib/functions/refine_assigned)."""
+    g = gv[labels == label]
+    if len(g) == 0:
+        return 0, 0.0, ubi.copy()
+    h = np.dot(g, ubi.T)
+    ih = np.rint(h)
+    sumdrlv2 = ((h - ih) ** 2).sum() / len(g)
+    R = np.dot(g.T, ih)
+    H = np.dot(ih.T, ih)
+    try:
+        ubi_new = np.linalg.inv(np.dot(R, np.linalg.inv(H)))
+    except np.linalg.LinAlgError:
+        ubi_new = ubi.copy()
+    return len(g), sumdrlv2, ubi_new
+
+
+def _refine_assigned_data(seed):
+    """Near-integer hkls so that refinement is meaningful."""
+    rng = np.random.RandomState(seed)
+    ubi = rng.randn(3, 3) + 3 * np.eye(3)
+    hkl = rng.randint(-5, 6, (30, 3)).astype(np.float64)
+    gv = np.dot(hkl, np.linalg.inv(ubi).T) + rng.randn(30, 3) * 0.01
+    labels = rng.randint(0, 2, 30).astype(np.int32)
+    return ubi, gv, labels
+
+
+class TestRefineAssignedReference:
+    """Runs whatever the ImageD11 version (old ones hang on this call)."""
+    @pytest.mark.parametrize("seed", [1, 2, 3])
+    def test_vs_numpy(self, seed):
+        ubi, gv, labels = _refine_assigned_data(seed)
+        npk_r, drlv2_r, ubi_r = _refine_assigned_ref(ubi, gv, labels, 1)
+        ubi_n = ubi.copy()
+        npk_n, drlv2_n = NEW.refine_assigned(ubi_n, gv, labels, 1)
+        assert npk_r == npk_n > 0
+        close(drlv2_r, drlv2_n)
+        close(ubi_r, ubi_n, rtol=1e-8, atol=1e-8)
+        assert not np.allclose(ubi_n, ubi)  # it did refine
+
+
 @pytest.mark.skipif(not _REFINE_ASSIGNED_FIXED,
-                    reason="ImageD11 refine_assigned has infinite loop (fixed in >=2.1.4)")
+                    reason="ImageD11 < 2.1.4 refine_assigned hangs; "
+                           "TestRefineAssignedReference covers NEW")
 class TestRefineAssigned:
     def test_random(self):
         np.random.seed(42)
@@ -277,6 +319,19 @@ class TestPutIncr:
         assert data[1] == 5.0
 
 
+def _misori_tetragonal_ref(u1, u2):
+    """numpy version of lib/functions/misori_tetragonal."""
+    r = np.dot(u1.T, u2)
+    ab = max(abs(r[0, 0]) + abs(r[1, 1]), abs(r[1, 0]) + abs(r[0, 1]))
+    return ab + abs(r[2, 2])
+
+
+def _old_misori_tetragonal_buggy(func):
+    """Old ImageD11 misori_tetragonal returns 1 for the identity, not 3."""
+    return (func == "misori_tetragonal" and
+            abs(OLD.misori_tetragonal(np.eye(3), np.eye(3)) - 1.0) < 0.01)
+
+
 class TestMisori:
     @pytest.mark.parametrize("func", [
         "misori_cubic", "misori_orthorhombic",
@@ -285,11 +340,10 @@ class TestMisori:
     def test_identity(self, func):
         u1 = np.eye(3)
         u2 = np.eye(3)
-        old_val = getattr(OLD, func)(u1, u2)
         new_val = getattr(NEW, func)(u1, u2)
-        if func == "misori_tetragonal" and abs(old_val - 1.0) < 0.01:
-            pytest.skip("misori_tetragonal: bug fixed in c2ImageD11 (OLD returns 1, correct is 3)")
-        close(old_val, new_val)
+        close(new_val, 3.0)  # identity: trace of I
+        if not _old_misori_tetragonal_buggy(func):
+            close(getattr(OLD, func)(u1, u2), new_val)
 
     @pytest.mark.parametrize("func", [
         "misori_cubic", "misori_orthorhombic",
@@ -300,11 +354,11 @@ class TestMisori:
         for _ in range(3):
             u1 = np.random.randn(3, 3)
             u2 = np.random.randn(3, 3)
-            old_val = getattr(OLD, func)(u1, u2)
             new_val = getattr(NEW, func)(u1, u2)
-            if func == "misori_tetragonal" and abs(getattr(OLD, func)(np.eye(3), np.eye(3)) - 1.0) < 0.01:
-                pytest.skip("misori_tetragonal: bug fixed in c2ImageD11")
-            close(old_val, new_val)
+            if func == "misori_tetragonal":
+                close(new_val, _misori_tetragonal_ref(u1, u2))
+            if not _old_misori_tetragonal_buggy(func):
+                close(getattr(OLD, func)(u1, u2), new_val)
 
 
 # ============================================================
@@ -489,8 +543,7 @@ class TestBloboverlaps:
         l2 = np.zeros((ns, nf), dtype=np.int32)
         n1 = OLD.connectedpixels(d1, l1, 8.0, 0, 1)
         n2 = OLD.connectedpixels(d2, l2, 8.0, 0, 1)
-        if n1 == 0 or n2 == 0:
-            return
+        assert n1 > 0 and n2 > 0, "test data must give blobs: %d %d" % (n1, n2)
         # f2py blobproperties allocates and returns result arrays
         r1_o = OLD.blobproperties(d1, l1, n1)
         r2_o = OLD.blobproperties(d2, l2, n2)

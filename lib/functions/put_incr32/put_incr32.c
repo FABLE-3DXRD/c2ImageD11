@@ -4,6 +4,7 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "put_incr32(data: buffer, ind: buffer, vals: buffer, boundscheck: int = 0) -> void",
+ *     "tags": ["Array operations"],
  *     "doc": "does the simple loop : data[ind] += vals\nnot sure why this isn't in numpy\nuses 32 bit addressing",
  *     "params": {
  *         "data": "Destination array (float32).",

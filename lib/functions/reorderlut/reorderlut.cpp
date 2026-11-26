@@ -2,6 +2,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "reorderlut_f32_a32(data: buffer, adr: buffer, out: buffer) -> void",
+ *  "tags": ["Array operations"],
  *  "doc": "lut called in sandbox/fazit.py simple\nloop with openmp saying out[i] in data[adr[i]]\ne.g. semi-random reading",
  *  "checks": ["data.format == 'f'", "adr.format == 'I' or adr.itemsize == 4",
  *      "adr.n == data.n", "out.format == 'f'", "out.n == data.n"],
@@ -18,6 +19,7 @@ extern "C" void reorderlut_f32_a32(const float * data, const uint32_t * lut,
 
 /* C2PY_BEGIN
  * {"py_sig": "reorderlut_u16_a32(data: buffer, adr: buffer, out: buffer) -> void",
+ *  "tags": ["Array operations"],
  *  "doc": "out[i] = data[adr[i]].",
  *  "checks": ["data.format == 'H' or data.itemsize == 2", "adr.format == 'I' or adr.itemsize == 4",
  *      "adr.n == data.n", "out.format == 'H' or out.itemsize == 2", "out.n == data.n"],

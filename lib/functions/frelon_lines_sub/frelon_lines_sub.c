@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "frelon_lines_sub(img: buffer, drk: buffer, cut: float) -> void",
+ *  "tags": ["Image corrections"],
  *  "doc": "Dark subtract then per-row baseline removal.",
  *  "checks": ["img.format == 'f'", "img.ndim == 2",
  *         "img.slow_axis == 0", "drk.format == 'f'", "drk.n == img.n"],

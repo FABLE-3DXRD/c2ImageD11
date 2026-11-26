@@ -4,6 +4,7 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "closest_vec(x: buffer, ic: buffer) -> void",
+ *     "tags": ["Indexing"],
  *     "doc": "finds the closest neighbors for each row of X\nignoring the self. Treated as a X=[v1,v2,v3,...], computes\nsum{(vi-vj)**2} for all i!=j and places minimum in ic.",
  *     "params": {
  *         "x": "2D array of feature vectors, shape (nv, dim). Each row is a vector.",
