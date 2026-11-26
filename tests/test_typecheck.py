@@ -1,11 +1,15 @@
 """Test that type mismatches in buffer arguments are properly rejected."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import numbers
-
 import pytest
 import numpy as np
 import c2ImageD11
+
+# The wrapper returns C integers as int on Python 3 and long on Python 2.
+try:
+    INT_TYPES = (int, long)  # noqa: F821 (Python 2)
+except NameError:
+    INT_TYPES = (int,)
 
 
 def test_score_f64_only():
@@ -13,7 +17,7 @@ def test_score_f64_only():
     ubi = np.eye(3, dtype=np.float64)
     gv = np.random.randn(10, 3).astype(np.float64)
     n = c2ImageD11.score(ubi, gv, 0.5)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
     assert n >= 0
 
 
@@ -22,7 +26,7 @@ def test_score_f32_works():
     ubi = np.eye(3, dtype=np.float64)
     gv = np.random.randn(10, 3).astype(np.float32)
     n = c2ImageD11.score(ubi, gv, 0.5)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
     assert n >= 0
 
 
@@ -31,7 +35,7 @@ def test_score_and_refine_f64_works():
     ubi = np.random.randn(3, 3).astype(np.float64)
     gv = np.random.randn(10, 3).astype(np.float64)
     n, s = c2ImageD11.score_and_refine(ubi, gv, 0.5)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
 
 
 def test_score_and_refine_f32_works():
@@ -39,7 +43,7 @@ def test_score_and_refine_f32_works():
     ubi = np.random.randn(3, 3).astype(np.float64)
     gv = np.random.randn(10, 3).astype(np.float32)
     n, s = c2ImageD11.score_and_refine(ubi, gv, 0.5)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
 
 
 def test_score_rejects_int_gv():
@@ -76,4 +80,4 @@ def test_score_and_refine_soa_via_T():
     ubi = np.random.randn(3, 3).astype(np.float64)
     gv = np.random.randn(10, 3).astype(np.float64)
     n, s = c2ImageD11.score_and_refine(ubi, gv.T.copy(), 0.5)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES

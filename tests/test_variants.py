@@ -2,8 +2,6 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import multiprocessing
-import numbers
 import sys
 import os
 import numpy as np
@@ -15,14 +13,21 @@ from test_data import generate_single_ubi_data
 
 from c2ImageD11 import score_and_refine
 from c2ImageD11 import cimaged11_omp_set_num_threads
+from c2ImageD11 import cimaged11_omp_get_max_threads
 from c2ImageD11 import cimaged11_omp_get_min_ng, cimaged11_omp_set_min_ng
+
+# The wrapper returns C integers as int on Python 3 and long on Python 2.
+try:
+    INT_TYPES = (int, long)  # noqa: F821 (Python 2)
+except NameError:
+    INT_TYPES = (int,)
 
 
 def test_basic():
     """score_and_refine works via Python dispatch."""
     ubi, gv, tol = generate_single_ubi_data(100)
     n, s = score_and_refine(ubi.copy(), gv, tol)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
     assert isinstance(s, float)
     assert n >= 0 and s >= 0
 
@@ -70,7 +75,7 @@ def test_ambiguous_33():
     gv = np.dot(hkls, UB.T)
 
     n, s = score_and_refine(ubi.copy(), gv, 0.05)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
     assert n >= 0
 
 
@@ -107,14 +112,14 @@ def test_dispatch_f32_without_sse41():
     gv = (np.dot(hkls, UB.T)).astype(np.float32)
 
     n, s = score_and_refine(ubi.copy(), gv, 0.05)
-    assert isinstance(n, numbers.Integral)
+    assert type(n) in INT_TYPES
     assert n > 0, "f32 path should find peaks"
     assert s > 0
 
 
 def test_omp_min_ng():
     """The OpenMP cutoff is readable and defaults to 10000."""
-    assert isinstance(cimaged11_omp_get_min_ng(), numbers.Integral)
+    assert type(cimaged11_omp_get_min_ng()) in INT_TYPES
     assert cimaged11_omp_get_min_ng() > 0
     assert cimaged11_omp_get_min_ng() == 10000
 
@@ -141,20 +146,19 @@ def test_threading_correctness():
     hkls = rng.randint(-8, 9, size=(ng, 3)).astype(np.float64)
     gv = np.dot(hkls, UB.T)
 
-    # Single thread
-    cimaged11_omp_set_num_threads(1)
-    ubi_1t = ubi.copy()
-    n_1t, s_1t = score_and_refine(ubi_1t, gv, 0.05)
-
-    # Multi thread
+    # Ask OpenMP how many threads it would use; at least 2 so the
+    # threaded path runs even on one core.
+    nt = cimaged11_omp_get_max_threads()
     try:
-        n_cores = multiprocessing.cpu_count()  # os.cpu_count is py3 only
-    except NotImplementedError:
-        n_cores = 2
-    n_cores = max(n_cores, 2)
-    cimaged11_omp_set_num_threads(n_cores)
-    ubi_nt = ubi.copy()
-    n_nt, s_nt = score_and_refine(ubi_nt, gv, 0.05)
+        cimaged11_omp_set_num_threads(1)
+        ubi_1t = ubi.copy()
+        n_1t, s_1t = score_and_refine(ubi_1t, gv, 0.05)
+
+        cimaged11_omp_set_num_threads(max(nt, 2))
+        ubi_nt = ubi.copy()
+        n_nt, s_nt = score_and_refine(ubi_nt, gv, 0.05)
+    finally:
+        cimaged11_omp_set_num_threads(nt)
 
     assert n_1t == n_nt, \
         "threading n mismatch: 1T=%d nT=%d" % (n_1t, n_nt)
