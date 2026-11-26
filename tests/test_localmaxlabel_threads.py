@@ -5,9 +5,6 @@ Port of the test from ImageD11 PR #689 (thread race on relabelled paths).
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import multiprocessing
-import os
-
 import numpy as np
 import pytest
 
@@ -15,12 +12,8 @@ import c2ImageD11 as ci
 
 
 def _ncores():
-    if hasattr(os, "sched_getaffinity"):
-        return len(os.sched_getaffinity(0))
-    try:
-        return multiprocessing.cpu_count()
-    except NotImplementedError:
-        return 1
+    """Threads OpenMP would use (respects OMP_NUM_THREADS)."""
+    return ci.cimaged11_omp_get_max_threads()
 
 
 def _box_smooth(a, w):
