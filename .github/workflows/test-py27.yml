@@ -56,10 +56,12 @@ jobs:
           cd ImageD11-1.9.8
           python2 setup.py build_ext --inplace
 
-      - name: Run equivalence tests
+      - name: Run all tests (equivalence vs ImageD11 1.9.8)
         run: |
-          PYTHONPATH=/tmp/imaged11_src/ImageD11-1.9.8:$PYTHONPATH python2 -m pytest tests/test_equivalence.py -v
-        continue-on-error: true
+          export PYTHONPATH=/tmp/imaged11_src/ImageD11-1.9.8:$PYTHONPATH
+          # fail here rather than let test_equivalence.py skip itself
+          python2 -c "import ImageD11._cImageD11"
+          python2 -m pytest tests -v
 
   windows-py27:
     runs-on: windows-2022
@@ -132,8 +134,9 @@ jobs:
         run: |
           C:\Python27\python.exe -m pip install ImageD11==1.9.8 --only-binary :all: --no-deps
 
-      - name: Run equivalence tests
+      - name: Run all tests (equivalence vs ImageD11 1.9.8)
         shell: cmd
         run: |
-          C:\Python27\python.exe -m pytest tests\test_equivalence.py -v
-        continue-on-error: true
+          rem fail here rather than let test_equivalence.py skip itself
+          C:\Python27\python.exe -c "import ImageD11._cImageD11" || exit /b 1
+          C:\Python27\python.exe -m pytest tests -v

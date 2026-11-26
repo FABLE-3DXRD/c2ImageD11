@@ -2,6 +2,8 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import multiprocessing
+import numbers
 import sys
 import os
 import numpy as np
@@ -20,7 +22,7 @@ def test_basic():
     """score_and_refine works via Python dispatch."""
     ubi, gv, tol = generate_single_ubi_data(100)
     n, s = score_and_refine(ubi.copy(), gv, tol)
-    assert isinstance(n, (int, np.integer))
+    assert isinstance(n, numbers.Integral)
     assert isinstance(s, float)
     assert n >= 0 and s >= 0
 
@@ -68,7 +70,7 @@ def test_ambiguous_33():
     gv = np.dot(hkls, UB.T)
 
     n, s = score_and_refine(ubi.copy(), gv, 0.05)
-    assert isinstance(n, (int, np.integer))
+    assert isinstance(n, numbers.Integral)
     assert n >= 0
 
 
@@ -105,14 +107,14 @@ def test_dispatch_f32_without_sse41():
     gv = (np.dot(hkls, UB.T)).astype(np.float32)
 
     n, s = score_and_refine(ubi.copy(), gv, 0.05)
-    assert isinstance(n, (int, np.integer))
+    assert isinstance(n, numbers.Integral)
     assert n > 0, "f32 path should find peaks"
     assert s > 0
 
 
 def test_omp_min_ng():
     """The OpenMP cutoff is readable and defaults to 10000."""
-    assert isinstance(cimaged11_omp_get_min_ng(), int)
+    assert isinstance(cimaged11_omp_get_min_ng(), numbers.Integral)
     assert cimaged11_omp_get_min_ng() > 0
     assert cimaged11_omp_get_min_ng() == 10000
 
@@ -145,7 +147,11 @@ def test_threading_correctness():
     n_1t, s_1t = score_and_refine(ubi_1t, gv, 0.05)
 
     # Multi thread
-    n_cores = os.cpu_count() or 2
+    try:
+        n_cores = multiprocessing.cpu_count()  # os.cpu_count is py3 only
+    except NotImplementedError:
+        n_cores = 2
+    n_cores = max(n_cores, 2)
     cimaged11_omp_set_num_threads(n_cores)
     ubi_nt = ubi.copy()
     n_nt, s_nt = score_and_refine(ubi_nt, gv, 0.05)

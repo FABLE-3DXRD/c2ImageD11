@@ -89,6 +89,8 @@ jobs:
 
       - name: Run tests
         run: |
+          # fail here rather than let test_equivalence.py skip itself
+          python -c "import ImageD11._cImageD11"
           cd "$(mktemp -d)" && python -m pytest "$GITHUB_WORKSPACE/tests/" -v
 
       - name: Verify docs integrity
@@ -183,6 +185,8 @@ jobs:
 
       - name: Run tests
         run: |
+          rem fail here rather than let test_equivalence.py skip itself
+          python -c "import ImageD11._cImageD11" || exit /b 1
           move %GITHUB_WORKSPACE%\c2ImageD11\__init__.py %GITHUB_WORKSPACE%\c2ImageD11\__init__.py.bak
           cd %TEMP% && python -m pytest %GITHUB_WORKSPACE%\tests\ -v
 
