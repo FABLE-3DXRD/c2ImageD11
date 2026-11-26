@@ -87,7 +87,7 @@ class TestLocalMaxLabelTypes(object):
             typed_img = img.astype(dt)
             lb = np.empty_like(typed_img, dtype=np.int32)
             w = np.empty_like(typed_img, dtype=np.uint8)
-            # Confirm dispatch (no crash) — peak count won't match f32
+            # Confirm dispatch (no crash) -- peak count won't match f32
             # due to different comparison semantics, but must be finite
             n = ci.localmaxlabel(typed_img, lb, w)
             assert n > 0, "localmaxlabel {}: no peaks".format(dt.__name__)
