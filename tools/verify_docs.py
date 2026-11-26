@@ -198,6 +198,34 @@ def check_bench_data():
     return 0
 
 
+def check_function_tags():
+    """Every exported C function must carry a 'tags' category in its C2PY_BEGIN."""
+    import sys
+    sys.path.insert(0, os.path.join(HERE, "tools"))
+    try:
+        from generate_docs import _load_function_meta
+    except Exception as e:
+        print("  FAIL: could not import generate_docs: {}".format(e))
+        return 1
+
+    import c2ImageD11 as ci
+    mod = ci._cImageD11
+    skip = {"absolute_import", "division", "print_function", "unicode_literals",
+            "check_multiprocessing", "np", "os", "sys", "platform", "warnings",
+            "importlib"}
+    functions = sorted(n for n in dir(mod)
+                       if not n.startswith("_")
+                       and n not in skip
+                       and callable(getattr(mod, n, None)))
+    meta = _load_function_meta()
+    missing = [n for n in functions if not meta.get(n, {}).get("tags")]
+    if missing:
+        print("  FAIL: {} function(s) missing 'tags': {}".format(len(missing), ", ".join(missing)))
+        return 1
+    print("  OK: all {} exported functions have a 'tags' category".format(len(functions)))
+    return 0
+
+
 def main():
     print("Verifying documentation integrity...")
     print()
@@ -209,6 +237,10 @@ def main():
 
     print("## C2PY_BEGIN parse checks")
     rc |= check_c2py_blocks()
+    print()
+
+    print("## Function tag checks")
+    rc |= check_function_tags()
     print()
 
     print("## Generator dry-run")

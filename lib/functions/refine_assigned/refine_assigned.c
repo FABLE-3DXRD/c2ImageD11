@@ -5,6 +5,7 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "refine_assigned(ubi: buffer, gv: buffer, labels: buffer, label: int) -> void",
+ *     "tags": ["Indexing"],
  *     "doc": "fits a ubi matrix to a set of g-vectors and assignments\nin labels. e.g. where(labels==label) it uses the peaks.\n  ... perhaps this is not what you want for overlapping peaks in twins!",
  *     "params": {
  *         "ubi": "Orientation matrix (9-element flattened double).",

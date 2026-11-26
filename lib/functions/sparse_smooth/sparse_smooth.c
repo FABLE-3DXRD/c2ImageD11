@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "sparse_smooth(v: buffer, i: buffer, j: buffer, s: buffer) -> void",
+ *  "tags": ["Sparse"],
  *  "doc": "smooths data in coo format. Workaround for avoiding\nequal pixels on peak tails for localmaxlabel\nsingle threaded",
  *  "params": {"v": "Values (float32).", "i": "Rows (uint16).", "j": "Cols (uint16).", "s": "Output smoothed (float32)."},
  *  "checks": ["v.slow_axis == 0",

@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "clean_mask(msk: buffer, ret: buffer) -> int",
+ *  "tags": ["Image corrections"],
  *  "doc": "removes pixels which are not 4 connected from msk\nwhile copying into ret.",
  *  "params": {"msk": "Input int8 2D mask.", "ret": "Output cleaned int8 mask."},
  *  "checks": ["msk.format == 'b' or msk.format == 'B'", "msk.ndim == 2",

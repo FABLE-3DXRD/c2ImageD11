@@ -46,7 +46,7 @@ jobs:
           || echo "ImageD11 not available"
 
       - name: Install doc deps
-        run: pip install numpy c2py23 mkdocs-material
+        run: pip install numpy c2py23==0.6.1 mkdocs-material
 
       - name: Generate docs
         run: python tools/generate_docs.py

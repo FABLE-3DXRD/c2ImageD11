@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "reorder_u16_a32_a16(data: buffer, adr0: buffer, adr1: buffer, out: buffer) -> void",
+ *  "tags": ["Array operations"],
  *  "doc": "2D reorder with per-row base + per-pixel offsets.",
  *  "checks": ["data.format == 'H' or data.itemsize == 2", "data.ndim == 2",
  *      "adr0.format == 'I' or adr0.itemsize == 4", "adr0.n == data.shape[0]",

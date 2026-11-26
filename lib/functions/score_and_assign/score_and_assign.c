@@ -4,6 +4,7 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "score_and_assign(ubi: buffer, gv: buffer, tol: float, drlv2: buffer, labels: buffer, label: int) -> int",
+ *     "tags": ["Indexing", "Scattering geometry"],
  *     "doc": "is similar to score but it assigns peaks to this\nubi only if they fit the data better than the current UBI.\nIt updates drlv2 and labels to use best fitting grain for each peak.\n ... perhaps this is not what you want for overlapping peaks in twins!",
  *     "params": {
  *         "ubi": "Orientation matrix (9-element flattened double).",

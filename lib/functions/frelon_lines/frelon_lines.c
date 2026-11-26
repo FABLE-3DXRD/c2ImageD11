@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "frelon_lines(img: buffer, cut: float) -> void",
+ *  "tags": ["Image corrections"],
  *  "doc": "Subtract per-row baseline using quiet pixels (value < cut).",
  *  "checks": ["img.format == 'f'", "img.ndim == 2"],
  *  "c_overloads": [{"sig": "void frelon_lines(float *img, intptr_t ns, intptr_t nf, float cut)",

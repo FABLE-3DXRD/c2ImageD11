@@ -3,6 +3,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "compress_duplicates(i: buffer, j: buffer, oi: buffer, oj: buffer, tmp: buffer) -> int",
+ *  "tags": ["Sparse", "Indexing"],
  *  "doc": "removes duplicate i,j labels. On entry then\ni and j are set as the labels from two images. They are sorted\nand on exit i,j hold the unique pairs and oi holds the count\nfor the number of overlaps. oj and tmp are temporaries.",
  *  "params": {"i": "I/O int32 col 0.", "j": "I/O int32 col 1.", "oi": "Output counts.", "oj": "Temp.", "tmp": "Temp."},
  *  "checks": ["( i.format == 'i' or i.format == 'l' )", "( j.format == 'i' or j.format == 'l' )", "j.n == i.n",

@@ -87,7 +87,7 @@ class TestLocalMaxLabelTypes(object):
             typed_img = img.astype(dt)
             lb = np.empty_like(typed_img, dtype=np.int32)
             w = np.empty_like(typed_img, dtype=np.uint8)
-            # Confirm dispatch (no crash) — peak count won't match f32
+            # Confirm dispatch (no crash) -- peak count won't match f32
             # due to different comparison semantics, but must be finite
             n = ci.localmaxlabel(typed_img, lb, w)
             assert n > 0, "localmaxlabel {}: no peaks".format(dt.__name__)
@@ -141,6 +141,7 @@ class TestBlobpropertiesTypes(object):
         f32_img = img.astype(np.float32)
         ref_labels = np.empty_like(f32_img, dtype=np.int32)
         n_obj = ci.connectedpixels(f32_img, ref_labels, 100.0)
+        assert n_obj == 2, "expected the two blobs, got {}".format(n_obj)
 
         for dt in [np.float32, np.uint8, np.uint16, np.uint32]:
             typed_img = img.astype(dt)
@@ -155,7 +156,6 @@ class TestBlobpropertiesTypes(object):
             assert result.shape == (n, 36), \
                 "blobproperties {}: wrong shape {}".format(
                     dt.__name__, result.shape)
-            if n > 0:
-                assert np.isfinite(result).all(), \
-                    "blobproperties {}: received non-finite values".format(
-                        dt.__name__)
+            assert np.isfinite(result).all(), \
+                "blobproperties {}: received non-finite values".format(
+                    dt.__name__)

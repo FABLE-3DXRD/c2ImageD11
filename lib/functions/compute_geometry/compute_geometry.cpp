@@ -4,6 +4,8 @@
 /* C2PY_BEGIN
  * {
  *     "py_sig": "compute_geometry(xlylzl: buffer, omega: buffer, omegasign: float, wvln: float, wedge: float, chi: float, t: buffer, out: buffer) -> void",
+ *     "tags": ["Scattering geometry"],
+ *     "layout": "xlylzl and out accept (n,3) AoS or (3,n) SoA",
  *     "doc": "is for the \"updateGeometry\" method of columnfiles\nfrom xlylzl it will compute tth, eta, ds, gve into out\nin the laboratory in xlylzl[npks], the omega rotation[npks], and\nthe rest of the parameters (wedge,wvln,chi,t[3] and omegasign)\nout should contain : (tth, eta, ds, gx, gy, gz)",
  *     "params": {
  *         "xlylzl": "Spot positions in lab frame, (n,3) AoS or (3,n) SoA.",
@@ -80,6 +82,8 @@ extern "C" void compute_geometry_soa_f32(const float xlylzl[], const float omega
 /* C2PY_BEGIN
  * {
  *     "py_sig": "compute_geometry_soa(xl: buffer, yl: buffer, zl: buffer, omega: buffer, omegasign: float, wvln: float, wedge: float, chi: float, t: buffer, tth: buffer, eta: buffer, ds: buffer, gx: buffer, gy: buffer, gz: buffer) -> void",
+ *     "tags": ["Scattering geometry"],
+ *     "layout": "split SoA: separate xl, yl, zl inputs and tth, eta, ds, gx, gy, gz outputs",
  *     "c_overloads": [
  *         {
  *             "when": "xl.format == 'd' and yl.format == 'd' and zl.format == 'd' and omega.format == 'd' and tth.format == 'd' and eta.format == 'd' and ds.format == 'd' and gx.format == 'd' and gy.format == 'd' and gz.format == 'd' and xl.n == yl.n and yl.n == zl.n and zl.n == omega.n and omega.n == tth.n and tth.n == eta.n and eta.n == ds.n and ds.n == gx.n and gx.n == gy.n and gy.n == gz.n",

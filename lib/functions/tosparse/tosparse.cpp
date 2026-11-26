@@ -2,6 +2,7 @@
 
 /* C2PY_BEGIN
  * {"py_sig": "tosparse_f32(img: buffer, msk: buffer, row: buffer, col: buffer, val: buffer, cut: float) -> int",
+ *  "tags": ["Sparse"],
  *  "doc": "Convert dense float32 image to sparse COO.",
  *  "params": {"img": "Input float32 2D.", "msk": "Mask (uint8).", "row": "Output rows.", "col": "Output cols.", "val": "Output values.", "cut": "Threshold."},
  *  "checks": ["img.format == 'f'", "img.ndim == 2",
@@ -22,6 +23,7 @@ extern "C" int tosparse_f32(const float * img, const uint8_t * msk,
 
 /* C2PY_BEGIN
  * {"py_sig": "tosparse_u16(img: buffer, msk: buffer, row: buffer, col: buffer, val: buffer, cut: int) -> int",
+ *  "tags": ["Sparse"],
  *  "doc": "stores pixels from img into row/col/val.\nmsk determines whether pixels are masked (e.g. eiger mask)\nreturns the number of pixels found",
  *  "params": {"img": "Input uint16 2D.", "msk": "Mask (uint8, 0=include).", "row": "Output rows.", "col": "Output cols.", "val": "Output values.", "cut": "Threshold."},
  *  "checks": ["img.format == 'H' or img.itemsize == 2", "img.ndim == 2",
@@ -42,6 +44,7 @@ extern "C" int tosparse_u16(const uint16_t * img, const uint8_t * msk,
 
 /* C2PY_BEGIN
  * {"py_sig": "tosparse_u32(img: buffer, msk: buffer, row: buffer, col: buffer, val: buffer, cut: float) -> int",
+ *  "tags": ["Sparse"],
  *  "doc": "Convert dense uint32 image to sparse COO.",
  *  "params": {"img": "Input uint32 2D.", "msk": "Mask (uint8).", "row": "Output rows.", "col": "Output cols.", "val": "Output values.", "cut": "Threshold (float)."},
  *  "checks": ["(img.format == 'I' or img.format == 'L') and img.itemsize == 4", "img.ndim == 2",
