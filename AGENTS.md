@@ -179,12 +179,23 @@ Build the `.so` with meson (see Build), then run inside a manylinux container:
 ```bash
 python3 setup.py bdist_wheel
 pip install auditwheel
-auditwheel repair --plat manylinux2014_x86_64 dist/*.whl -w wheelhouse/
+auditwheel repair --exclude libgomp.so.1 --plat manylinux2014_x86_64 dist/*.whl -w wheelhouse/
 ```
 
 Output is in `wheelhouse/` -- e.g. `c2imaged11-0.2.0-py3-none-manylinux2014_x86_64.whl`.
 
 The manylinux container sets the platform tag; `auditwheel repair` applies it.
+
+**We try not to bundle libgomp.**  This is a trade-off, not a law.  auditwheel
+would vendor a hash-renamed copy, which is a second OpenMP runtime in any
+process that already has one (oversubscription, fork hangs, static TLS
+exhaustion), and a user (e.g. in a conda env with its own libgomp) could not
+avoid ours.  Linking the system `libgomp.so.1` instead means it can be missing
+on minimal images; we judged that less bad than always duplicating it, so
+`__init__.py` turns that into an ImportError saying what to install.  Hence
+`--exclude libgomp.so.1`, and CI flags a libgomp copy in a wheel.  Revisit if
+the balance changes.  On Windows, delvewheel runs with `--no-mangle-all`:
+`vcomp140.dll` is bundled but keeps its name, so packages share one copy.
 The `.so` binary works across Python 2.7-3.14 (c2py23 emits both
 `init_cImageD11` and `PyInit__cImageD11`). The `__init__.py` loader detects
 the Python version and uses `imp.load_dynamic` (Py2) or `importlib` (Py3).

@@ -37,9 +37,15 @@ jobs:
 
       - name: Repair wheel for manylinux
         run: |
-          auditwheel repair dist/*.whl -w /tmp/wheelhouse/
+          # Never vendor libgomp: each renamed copy is a separate OpenMP
+          # runtime in the process.  Use the system libgomp.so.1.
+          auditwheel repair --exclude libgomp.so.1 dist/*.whl -w /tmp/wheelhouse/
           rm -f dist/*.whl
           mv /tmp/wheelhouse/*.whl dist/
+          python3 -m zipfile -l dist/*.whl > /tmp/wheel-contents.txt
+          if grep -i gomp /tmp/wheel-contents.txt; then
+            echo 'ERROR: libgomp was bundled into the wheel'; exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         with:

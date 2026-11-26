@@ -36,9 +36,15 @@ jobs:
 
       - name: Repair wheel for manylinux
         run: |
-          auditwheel repair --plat manylinux_2_28_x86_64 dist/*.whl -w /tmp/wheelhouse/
+          # Never vendor libgomp: each renamed copy is a separate OpenMP
+          # runtime in the process.  Use the system libgomp.so.1.
+          auditwheel repair --exclude libgomp.so.1 --plat manylinux_2_28_x86_64 dist/*.whl -w /tmp/wheelhouse/
           rm -f dist/*.whl
           mv /tmp/wheelhouse/*.whl dist/
+          python3 -m zipfile -l dist/*.whl > /tmp/wheel-contents.txt
+          if grep -i gomp /tmp/wheel-contents.txt; then
+            echo 'ERROR: libgomp was bundled into the wheel'; exit 1
+          fi
 
       - name: Build sdist
         run: |
@@ -129,14 +135,20 @@ jobs:
         run: |
           python setup.py bdist_wheel
 
-      - name: Repair wheel (delvewheel) - best effort
+      # Bundle vcomp140.dll (not every machine has the VC++ redist) but do
+      # NOT rename it.  Windows reuses an already-loaded DLL of the same
+      # name, so all packages share one OpenMP runtime.  A hash-mangled
+      # copy would be a second runtime in the process.
+      - name: Repair wheel (delvewheel)
         run: |
-          pip install delvewheel 2>nul || exit 0
+          pip install delvewheel || exit /b 1
           if not exist "%TEMP%\wheelhouse" mkdir "%TEMP%\wheelhouse"
-          for /f "delims=" %%f in ('dir /b dist\*.whl 2^>nul') do delvewheel repair -w "%TEMP%\wheelhouse" "dist\%%f"
-          if exist dist\*.whl del /f /q dist\*.whl
-          if exist "%TEMP%\wheelhouse\*.whl" xcopy /y "%TEMP%\wheelhouse\*.whl" dist\
-        continue-on-error: true
+          for /f "delims=" %%f in ('dir /b dist\*.whl') do (
+            delvewheel repair --no-mangle-all -w "%TEMP%\wheelhouse" "dist\%%f" || exit /b 1
+          )
+          del /f /q dist\*.whl
+          xcopy /y "%TEMP%\wheelhouse\*.whl" dist\ || exit /b 1
+          python -c "import glob,sys,zipfile; n=[x for w in glob.glob('dist/*.whl') for x in zipfile.ZipFile(w).namelist()]; v=[x for x in n if 'vcomp' in x.lower()]; print(v); sys.exit(0 if v and all(x.lower().endswith('/vcomp140.dll') for x in v) else 'ERROR: vcomp140.dll missing or name-mangled')"
 
       - uses: actions/upload-artifact@v4
         with:
