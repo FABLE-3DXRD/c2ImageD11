@@ -140,6 +140,12 @@ def main(argv):
     with io.open(hdr_cxx, 'w', encoding='utf-8') as f:
         f.write('#include <stdint.h>\nextern "C" {\n' + body + '}\n')
 
+    # gcc prints typographic quotes and translated messages under a
+    # UTF-8 or non-English locale; the regexes above expect plain ASCII.
+    env = dict(os.environ)
+    env['LC_ALL'] = 'C'
+    env.pop('LANGUAGE', None)
+
     nfiles = 0
     nbenign = 0
     problems = []
@@ -153,7 +159,7 @@ def main(argv):
         hdr = hdr_cxx if src.endswith('.cpp') else hdr_c
         cmd = compile_args(e) + ['-fsyntax-only', '-fdiagnostics-color=never',
                                  '-include', hdr]
-        p = subprocess.Popen(cmd, cwd=e['directory'],
+        p = subprocess.Popen(cmd, cwd=e['directory'], env=env,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         _, err = p.communicate()
         err = err.decode('utf-8', 'replace')
