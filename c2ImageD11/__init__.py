@@ -21,11 +21,11 @@ import warnings
 # Arch-aware .so loader
 #
 # The .so files in this directory follow the naming convention:
-#   _cImageD11_{arch}.so   (Linux)
+#   _cImageD11_{arch}.so   (Linux, macOS)
 #   _cImageD11_{arch}.pyd  (Windows)
 #
 # Where {arch} matches platform.machine() output:
-#   x86_64, aarch64, ppc64le, AMD64 (Windows), arm64 (Windows)
+#   x86_64, aarch64, ppc64le, AMD64 (Windows), arm64 (Windows, macOS)
 #
 # The same binary works across Python 2.7-3.14 because c2py23 emits both
 # init_cImageD11 (Py2) and PyInit__cImageD11 (Py3) entry points.
@@ -46,16 +46,31 @@ if not os.path.exists(_lib_path):
     # __version__ is still available; C functions will not be.
     _mod = None
 else:
-    if sys.version_info[0] >= 3:
-        import importlib.util
-        _spec = importlib.util.spec_from_file_location(
-            "c2ImageD11._cImageD11", _lib_path)
-        _mod = importlib.util.module_from_spec(_spec)
-        sys.modules["c2ImageD11._cImageD11"] = _mod
-        _spec.loader.exec_module(_mod)
-    else:
-        import imp
-        _mod = imp.load_dynamic("c2ImageD11._cImageD11", _lib_path)
+    try:
+        if sys.version_info[0] >= 3:
+            import importlib.util
+            _spec = importlib.util.spec_from_file_location(
+                "c2ImageD11._cImageD11", _lib_path)
+            _mod = importlib.util.module_from_spec(_spec)
+            sys.modules["c2ImageD11._cImageD11"] = _mod
+            _spec.loader.exec_module(_mod)
+        else:
+            import imp
+            _mod = imp.load_dynamic("c2ImageD11._cImageD11", _lib_path)
+    except ImportError as _err:
+        sys.modules.pop("c2ImageD11._cImageD11", None)
+        # Linux wheels deliberately do not bundle libgomp: a renamed private
+        # copy per package means several OpenMP runtimes in one process.
+        # They link the system libgomp.so.1 instead; say how to get it.
+        if "libgomp" not in str(_err):
+            raise
+        raise ImportError(
+            "{}\n\nc2ImageD11 needs the system GCC OpenMP runtime "
+            "(libgomp.so.1). Install it with your package manager, e.g.\n"
+            "  Debian/Ubuntu: apt install libgomp1\n"
+            "  RHEL/Fedora:   dnf install libgomp\n"
+            "  Alpine:        apk add libgomp\n"
+            "  conda:         conda install -c conda-forge libgomp".format(_err))
 
 if _mod is not None:
     # Make _cImageD11 importable as c2ImageD11._cImageD11

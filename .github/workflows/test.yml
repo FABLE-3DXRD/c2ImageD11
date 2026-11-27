@@ -30,15 +30,27 @@ jobs:
           ninja
           cp _cImageD11.so ../../c2ImageD11/_cImageD11_x86_64.so
 
+      - name: Check C definitions match the wrapper prototypes
+        run: |
+          # A mismatch (e.g. int vs intptr_t) can pass here and break on
+          # another ABI, as coverlaps did on Apple arm64.  Needs gcc.
+          python tools/check_prototypes.py build/libc2ImageD11
+
       - name: Build wheel
         run: |
           python setup.py bdist_wheel
 
       - name: Repair wheel for manylinux
         run: |
-          auditwheel repair --plat manylinux_2_28_x86_64 dist/*.whl -w /tmp/wheelhouse/
+          # Never vendor libgomp: each renamed copy is a separate OpenMP
+          # runtime in the process.  Use the system libgomp.so.1.
+          auditwheel repair --exclude libgomp.so.1 --plat manylinux_2_28_x86_64 dist/*.whl -w /tmp/wheelhouse/
           rm -f dist/*.whl
           mv /tmp/wheelhouse/*.whl dist/
+          python3 -m zipfile -l dist/*.whl > /tmp/wheel-contents.txt
+          if grep -i gomp /tmp/wheel-contents.txt; then
+            echo 'ERROR: libgomp was bundled into the wheel'; exit 1
+          fi
 
       - name: Build sdist
         run: |
@@ -129,14 +141,20 @@ jobs:
         run: |
           python setup.py bdist_wheel
 
-      - name: Repair wheel (delvewheel) - best effort
+      # Bundle vcomp140.dll (not every machine has the VC++ redist) but do
+      # NOT rename it.  Windows reuses an already-loaded DLL of the same
+      # name, so all packages share one OpenMP runtime.  A hash-mangled
+      # copy would be a second runtime in the process.
+      - name: Repair wheel (delvewheel)
         run: |
-          pip install delvewheel 2>nul || exit 0
+          pip install delvewheel || exit /b 1
           if not exist "%TEMP%\wheelhouse" mkdir "%TEMP%\wheelhouse"
-          for /f "delims=" %%f in ('dir /b dist\*.whl 2^>nul') do delvewheel repair -w "%TEMP%\wheelhouse" "dist\%%f"
-          if exist dist\*.whl del /f /q dist\*.whl
-          if exist "%TEMP%\wheelhouse\*.whl" xcopy /y "%TEMP%\wheelhouse\*.whl" dist\
-        continue-on-error: true
+          for /f "delims=" %%f in ('dir /b dist\*.whl') do (
+            delvewheel repair --no-mangle-all -w "%TEMP%\wheelhouse" "dist\%%f" || exit /b 1
+          )
+          del /f /q dist\*.whl
+          xcopy /y "%TEMP%\wheelhouse\*.whl" dist\ || exit /b 1
+          python -c "import glob,sys,zipfile; n=[x for w in glob.glob('dist/*.whl') for x in zipfile.ZipFile(w).namelist()]; v=[x for x in n if 'vcomp' in x.lower()]; print(v); sys.exit(0 if v and all(x.lower().endswith('/vcomp140.dll') for x in v) else 'ERROR: vcomp140.dll missing or name-mangled')"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -197,6 +215,122 @@ jobs:
           cd %TEMP% && python %GITHUB_WORKSPACE%\lib\functions\score_and_refine\bench.py
         continue-on-error: true
 
+  # The macOS pip wheels are built WITHOUT OpenMP (single-threaded): Apple
+  # clang has no OpenMP runtime, and bundling libomp would put a private
+  # copy in every user's process.  The code itself supports OpenMP on
+  # macOS (see the openmp option in lib/meson.build), e.g. for conda-forge.
+  macos-wheel:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15          # Apple Silicon
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build deps
+        run: |
+          pip install meson ninja "setuptools>=70.1" delocate
+
+      - name: Build .so with meson (no OpenMP for the pip wheel)
+        run: |
+          test "$(python -c 'import platform; print(platform.machine())')" = "${{ matrix.arch }}"
+          # Explicit: on macOS 'auto' would pick up a libomp if one is on
+          # the search path, and delocate would then bundle it.
+          meson setup -Dopenmp=disabled build/libc2ImageD11 lib
+          ninja -C build/libc2ImageD11
+          SO=c2ImageD11/_cImageD11_${{ matrix.arch }}.so
+          cp build/libc2ImageD11/_cImageD11.so $SO
+          otool -L $SO
+          if nm -u $SO | grep -i -E 'omp|kmpc'; then
+            echo 'ERROR: macOS build references OpenMP symbols'; exit 1
+          fi
+
+      - name: Build wheel
+        run: |
+          python setup.py bdist_wheel --plat-name macosx_11_0_${{ matrix.arch }}
+
+      - name: Check wheel (arch, macOS version, no external libraries)
+        run: |
+          delocate-wheel -v --require-archs ${{ matrix.arch }} \
+            --require-target-macos-version 11.0 dist/*.whl
+          delocate-listdeps --all dist/*.whl
+          python -m zipfile -l dist/*.whl > /tmp/wheel-contents.txt
+          cat /tmp/wheel-contents.txt
+          if grep -i -E "\.dylib|libomp|libgomp" /tmp/wheel-contents.txt; then
+            echo 'ERROR: a library was bundled into the macOS wheel'; exit 1
+          fi
+          ls dist/
+          test "$(ls dist/*.whl | wc -l)" -eq 1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-macos-${{ matrix.arch }}
+          path: dist/
+
+  macos-test-matrix:
+    needs: [macos-wheel]
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+        # ImageD11 publishes macOS wheels for these (equivalence tests)
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-macos-${{ matrix.arch }}
+          path: dist/
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install c2ImageD11 wheel
+        run: |
+          pip install dist/*.whl
+
+      - name: Install ImageD11 (binary from PyPI, no deps)
+        run: |
+          pip install ImageD11 --only-binary :all: --no-deps
+
+      - name: Install test deps
+        run: |
+          pip install numpy pytest
+
+      - name: Format diagnostic
+        run: |
+          cd "$GITHUB_WORKSPACE" && python tests/diag_format.py
+
+      - name: Run tests
+        run: |
+          # fail here rather than let test_equivalence.py skip itself
+          python -c "import ImageD11._cImageD11"
+          cd "$(mktemp -d)"
+          python -c "import c2ImageD11 as c; print(c.__file__); assert c.OPENMP is False"
+          python -m pytest "$GITHUB_WORKSPACE/tests/" -v
+
   linux-test:
     needs: [linux-test-matrix]
     if: always()
@@ -216,3 +350,13 @@ jobs:
         run: |
           [ "${{ needs.windows-test-matrix.result }}" = "success" ] || \
             { echo "FAIL: some windows-test-matrix jobs failed (${{ needs.windows-test-matrix.result }})"; exit 1; }
+
+  macos-test:
+    needs: [macos-test-matrix]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all matrix jobs passed
+        run: |
+          [ "${{ needs.macos-test-matrix.result }}" = "success" ] || \
+            { echo "FAIL: some macos-test-matrix jobs failed (${{ needs.macos-test-matrix.result }})"; exit 1; }

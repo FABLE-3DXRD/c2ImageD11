@@ -1,6 +1,6 @@
 # c2ImageD11
 
-Standalone C extensions for [ImageD11](https://github.com/jonwright/ImageD11),
+Standalone C extensions for [ImageD11](https://github.com/FABLE-3DXRD/ImageD11),
 ported from f2py to **[c2py23](https://github.com/jonwright/c2py23)**.
 
 ## What this is
@@ -59,6 +59,6 @@ The full API reference (58 C functions + CPU feature probes) is at the
 
 ## Links
 
-- [GitHub](https://github.com/jonwright/c2ImageD11)
+- [GitHub](https://github.com/FABLE-3DXRD/c2ImageD11)
 - [c2py23](https://github.com/jonwright/c2py23)
-- [ImageD11](https://github.com/jonwright/ImageD11)
+- [ImageD11](https://github.com/FABLE-3DXRD/ImageD11)

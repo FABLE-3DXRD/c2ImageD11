@@ -9,6 +9,18 @@ Two functions (`blobproperties`, `sparse_blob2Dproperties`) have thin
 Python allocation wrappers in `__init__.py` to match f2py's convention
 of auto-allocating output arrays.
 
+## Runtime requirements
+
+The Linux wheels link the system GCC OpenMP runtime (`libgomp.so.1`)
+rather than bundling a private copy, so every package in the process
+shares one OpenMP runtime.  It is present on almost every system with
+gcc installed; minimal container images may need `apt install libgomp1`
+(Debian/Ubuntu), `dnf install libgomp` (RHEL/Fedora) or `apk add libgomp`
+(Alpine).  The Windows wheels bundle `vcomp140.dll` under its original
+name for the same reason.  The macOS wheels (Apple Silicon and Intel,
+macOS 11+) are built without OpenMP and run single-threaded
+(`c2ImageD11.OPENMP` is `False`); they need no extra libraries.
+
 ## Build
 
 A normal build needs only meson + ninja + a C compiler.  The generated

@@ -12,7 +12,7 @@
 #   ./tools/upload.sh --list             # list recent CI runs
 #
 # Requirements:
-#   - gh CLI authenticated to jonwright/c2ImageD11
+#   - gh CLI authenticated to FABLE-3DXRD/c2ImageD11
 #   - pip install twine
 #   - PyPI API token (upload requires authentication)
 #

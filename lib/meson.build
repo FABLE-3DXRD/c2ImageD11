@@ -86,6 +86,38 @@ c2_sources_cpp = files(
 
 # Platform-specific compiler and link flags
 is_msvc = cc.get_id() == 'msvc'
+
+# OpenMP.  Linux/Windows: on unless -Dopenmp=disabled (gcc/MSVC ship the
+# runtime, flags below).  macOS: Apple clang ships no OpenMP runtime, so
+# use meson's openmp dependency: auto = use it if the toolchain provides
+# one (conda-forge clang + llvm-openmp, Homebrew libomp on the search
+# path), otherwise build single-threaded; enabled = require it.  Our pip
+# wheel passes -Dopenmp=disabled (see .github/workflows/test.yml): a
+# bundled libomp would be a private OpenMP copy in every user's process.
+# The C sources guard all OpenMP use with _OPENMP.
+is_darwin = host_machine.system() == 'darwin'
+openmp_opt = get_option('openmp')
+omp_dep = dependency('', required: false)
+if openmp_opt.disabled()
+  use_openmp = false
+elif is_darwin
+  omp_dep = dependency('openmp', required: openmp_opt)
+  use_openmp = omp_dep.found()
+else
+  use_openmp = true
+endif
+# Explicit flags only off-Darwin; on Darwin omp_dep carries them.
+omp_flags_explicit = use_openmp and not is_darwin
+if is_msvc
+  omp_args = omp_flags_explicit ? ['/openmp'] : []
+elif use_openmp
+  omp_args = omp_flags_explicit ? ['-fopenmp'] : []
+else
+  # Without OpenMP the pragmas are ignored on purpose: silence the warnings
+  # (gcc: -Wunknown-pragmas, clang: -Wsource-uses-openmp).
+  omp_args = cc.get_supported_arguments(
+    '-Wno-unknown-pragmas', '-Wno-source-uses-openmp')
+endif
 if is_msvc
   # /fp:fast contraction breaks (x+MAGIC)-MAGIC rounding trick used
   # by the baseline C/C++.  The AVX2/AVX-512 ISA kernels use nearbyint()
@@ -93,16 +125,16 @@ if is_msvc
   # math.  On GCC/Clang, (x+MAGIC)-MAGIC survives because the baseline is
   # compiled with -O2 (no -ffast-math); never add -ffast-math to the
   # baseline flags or the trick is folded to identity.
-  c2_c_args = ['/openmp', '/O2', '/D_DEFAULT_SOURCE']
-  c2_cpp_args = ['/openmp', '/O2']
+  c2_c_args = omp_args + ['/O2', '/D_DEFAULT_SOURCE']
+  c2_cpp_args = omp_args + ['/O2']
   c2_link_args = []
 else
-  c2_c_args = cc.get_supported_arguments(
-    '-fPIC', '-O2', '-fopenmp', '-D_DEFAULT_SOURCE',
+  c2_c_args = omp_args + cc.get_supported_arguments(
+    '-fPIC', '-O2', '-D_DEFAULT_SOURCE',
     '-Wno-format', '-Wno-incompatible-pointer-types')
-  c2_cpp_args = cpp.get_supported_arguments(
-    '-fPIC', '-O2', '-fopenmp')
-  c2_link_args = ['-lgomp']
+  c2_cpp_args = omp_args + cpp.get_supported_arguments(
+    '-fPIC', '-O2')
+  c2_link_args = omp_flags_explicit ? ['-lgomp'] : []
 endif
 
 m_dep = cc.find_library('m', required: false)
@@ -119,15 +151,15 @@ if host_machine.cpu_family() == 'x86_64'
     # would crash on SSE4.1-only CPUs (Penryn).  So SSE4.1 variants use
     # base flags only -- they compile correctly (magic-int rounding) but
     # without the nearbyint fast path.  AVX2/AVX-512 get proper ISA flags.
-    sse41_f64_flags = ['/openmp', '/O2']
-    sse41_f32_flags = ['/openmp', '/O2']
-    avx2_flags      = ['/openmp', '/O2', '/fp:fast', '/arch:AVX2']
-    avx512_flags    = ['/openmp', '/O2', '/fp:fast', '/arch:AVX512']
+    sse41_f64_flags = omp_args + ['/O2']
+    sse41_f32_flags = omp_args + ['/O2']
+    avx2_flags      = omp_args + ['/O2', '/fp:fast', '/arch:AVX2']
+    avx512_flags    = omp_args + ['/O2', '/fp:fast', '/arch:AVX512']
   else
-    sse41_f64_flags = ['-O2',             '-fopenmp', '-fPIC', '-msse4.1']
-    sse41_f32_flags = ['-O3', '-ffast-math', '-fopenmp', '-fPIC', '-msse4.1']
-    avx2_flags      = ['-O3', '-ffast-math', '-fopenmp', '-fPIC', '-mavx2', '-mfma']
-    avx512_flags    = ['-O3', '-ffast-math', '-fopenmp', '-fPIC', '-mavx512f', '-mavx2', '-mfma']
+    sse41_f64_flags = omp_args + ['-O2',                '-fPIC', '-msse4.1']
+    sse41_f32_flags = omp_args + ['-O3', '-ffast-math', '-fPIC', '-msse4.1']
+    avx2_flags      = omp_args + ['-O3', '-ffast-math', '-fPIC', '-mavx2', '-mfma']
+    avx512_flags    = omp_args + ['-O3', '-ffast-math', '-fPIC', '-mavx512f', '-mavx2', '-mfma']
   endif
 else
   # aarch64 / other: base compilation, no ISA flags needed
@@ -137,62 +169,65 @@ else
   avx512_flags    = c2_cpp_args
 endif
 
-sar_sse41_f64  = static_library('sar_sse41_f64',  'functions/score_and_refine/score_and_refine_f64_sse41.cpp',    cpp_args: sse41_f64_flags,  include_directories: c2_inc, dependencies: [m_dep])
-sar_sse41_f32  = static_library('sar_sse41_f32',  'functions/score_and_refine/score_and_refine_f32_sse41.cpp',    cpp_args: sse41_f32_flags,  include_directories: c2_inc, dependencies: [m_dep])
-sar_sse41_soa  = static_library('sar_sse41_soa',  'functions/score_and_refine/score_and_refine_f64_soa_sse41.cpp', cpp_args: sse41_f64_flags,  include_directories: c2_inc, dependencies: [m_dep])
-sar_sse41_f32soa= static_library('sar_sse41_f32soa','functions/score_and_refine/score_and_refine_f32_soa_sse41.cpp',cpp_args: sse41_f32_flags,  include_directories: c2_inc, dependencies: [m_dep])
+sar_sse41_f64  = static_library('sar_sse41_f64',  'functions/score_and_refine/score_and_refine_f64_sse41.cpp',    cpp_args: sse41_f64_flags,  include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+sar_sse41_f32  = static_library('sar_sse41_f32',  'functions/score_and_refine/score_and_refine_f32_sse41.cpp',    cpp_args: sse41_f32_flags,  include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+sar_sse41_soa  = static_library('sar_sse41_soa',  'functions/score_and_refine/score_and_refine_f64_soa_sse41.cpp', cpp_args: sse41_f64_flags,  include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+sar_sse41_f32soa= static_library('sar_sse41_f32soa','functions/score_and_refine/score_and_refine_f32_soa_sse41.cpp',cpp_args: sse41_f32_flags,  include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 
 if host_machine.cpu_family() == 'x86_64'
-  sar_avx2_f64   = static_library('sar_avx2_f64',   'functions/score_and_refine/sar_f64_aos_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx2_f32   = static_library('sar_avx2_f32',   'functions/score_and_refine/sar_f32_aos_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx2_f64   = static_library('sar_avx2_f64',   'functions/score_and_refine/sar_f64_aos_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx2_f32   = static_library('sar_avx2_f32',   'functions/score_and_refine/sar_f32_aos_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 else
-  sar_avx2_f64   = static_library('sar_avx2_f64',   'functions/score_and_refine/score_and_refine_f64_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx2_f32   = static_library('sar_avx2_f32',   'functions/score_and_refine/score_and_refine_f32_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx2_f64   = static_library('sar_avx2_f64',   'functions/score_and_refine/score_and_refine_f64_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx2_f32   = static_library('sar_avx2_f32',   'functions/score_and_refine/score_and_refine_f32_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 endif
 if host_machine.cpu_family() == 'x86_64'
-  sar_avx2_soa   = static_library('sar_avx2_soa',   'functions/score_and_refine/sar_f64_soa_avx2.cpp',         cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx2_f32soa= static_library('sar_avx2_f32soa','functions/score_and_refine/sar_f32_soa_avx2.cpp',         cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx2_soa   = static_library('sar_avx2_soa',   'functions/score_and_refine/sar_f64_soa_avx2.cpp',         cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx2_f32soa= static_library('sar_avx2_f32soa','functions/score_and_refine/sar_f32_soa_avx2.cpp',         cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 else
-  sar_avx2_soa   = static_library('sar_avx2_soa',   'functions/score_and_refine/score_and_refine_f64_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx2_f32soa= static_library('sar_avx2_f32soa','functions/score_and_refine/score_and_refine_f32_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx2_soa   = static_library('sar_avx2_soa',   'functions/score_and_refine/score_and_refine_f64_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx2_f32soa= static_library('sar_avx2_f32soa','functions/score_and_refine/score_and_refine_f32_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 endif
 
 if host_machine.cpu_family() == 'x86_64'
-  sar_avx512_f64  = static_library('sar_avx512_f64',  'functions/score_and_refine/sar_f64_aos_avx512.cpp',  cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx512_f32  = static_library('sar_avx512_f32',  'functions/score_and_refine/sar_f32_aos_avx512.cpp',  cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx512_f64  = static_library('sar_avx512_f64',  'functions/score_and_refine/sar_f64_aos_avx512.cpp',  cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx512_f32  = static_library('sar_avx512_f32',  'functions/score_and_refine/sar_f32_aos_avx512.cpp',  cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 else
-  sar_avx512_f64  = static_library('sar_avx512_f64',  'functions/score_and_refine/score_and_refine_f64_avx512.cpp',     cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx512_f32  = static_library('sar_avx512_f32',  'functions/score_and_refine/score_and_refine_f32_avx512.cpp',     cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx512_f64  = static_library('sar_avx512_f64',  'functions/score_and_refine/score_and_refine_f64_avx512.cpp',     cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx512_f32  = static_library('sar_avx512_f32',  'functions/score_and_refine/score_and_refine_f32_avx512.cpp',     cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 endif
 if host_machine.cpu_family() == 'x86_64'
-  sar_avx512_soa  = static_library('sar_avx512_soa',  'functions/score_and_refine/sar_f64_soa_avx512.cpp',       cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx512_f32soa=static_library('sar_avx512_f32soa','functions/score_and_refine/sar_f32_soa_avx512.cpp',       cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx512_soa  = static_library('sar_avx512_soa',  'functions/score_and_refine/sar_f64_soa_avx512.cpp',       cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx512_f32soa=static_library('sar_avx512_f32soa','functions/score_and_refine/sar_f32_soa_avx512.cpp',       cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 else
-  sar_avx512_soa  = static_library('sar_avx512_soa',  'functions/score_and_refine/score_and_refine_f64_soa_avx512.cpp',  cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  sar_avx512_f32soa=static_library('sar_avx512_f32soa','functions/score_and_refine/score_and_refine_f32_soa_avx512.cpp',cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
+  sar_avx512_soa  = static_library('sar_avx512_soa',  'functions/score_and_refine/score_and_refine_f64_soa_avx512.cpp',  cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  sar_avx512_f32soa=static_library('sar_avx512_f32soa','functions/score_and_refine/score_and_refine_f32_soa_avx512.cpp',cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 endif
 
 # score() ISA variants
 if host_machine.cpu_family() == 'x86_64'
-  score_avx2_f64   = static_library('score_avx2_f64',   'functions/score/score_f64_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  score_avx2_f32   = static_library('score_avx2_f32',   'functions/score/score_f32_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  score_avx2_soa_f64  = static_library('score_avx2_soa_f64',  'functions/score/score_f64_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  score_avx2_soa_f32  = static_library('score_avx2_soa_f32',  'functions/score/score_f32_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep])
-  score_avx512_f64 = static_library('score_avx512_f64', 'functions/score/score_f64_avx512.cpp',   cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  score_avx512_f32 = static_library('score_avx512_f32', 'functions/score/score_f32_avx512.cpp',   cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  score_avx512_soa_f64 = static_library('score_avx512_soa_f64','functions/score/score_f64_soa_avx512.cpp',cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
-  score_avx512_soa_f32 = static_library('score_avx512_soa_f32','functions/score/score_f32_soa_avx512.cpp',cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep])
+  score_avx2_f64   = static_library('score_avx2_f64',   'functions/score/score_f64_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx2_f32   = static_library('score_avx2_f32',   'functions/score/score_f32_avx2.cpp',     cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx2_soa_f64  = static_library('score_avx2_soa_f64',  'functions/score/score_f64_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx2_soa_f32  = static_library('score_avx2_soa_f32',  'functions/score/score_f32_soa_avx2.cpp',  cpp_args: avx2_flags,   include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx512_f64 = static_library('score_avx512_f64', 'functions/score/score_f64_avx512.cpp',   cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx512_f32 = static_library('score_avx512_f32', 'functions/score/score_f32_avx512.cpp',   cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx512_soa_f64 = static_library('score_avx512_soa_f64','functions/score/score_f64_soa_avx512.cpp',cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+  score_avx512_soa_f32 = static_library('score_avx512_soa_f32','functions/score/score_f32_soa_avx512.cpp',cpp_args: avx512_flags, include_directories: c2_inc, dependencies: [m_dep, omp_dep])
 else
   # non-x86_64: stub symbols that delegate to scalar loops
   score_avx2_f64 = static_library('score_avx2_f64',
-    'functions/score/score_stubs.c', include_directories: c2_inc, dependencies: [m_dep])
-  score_avx2_f32   = score_avx2_f64
-  score_avx2_soa_f64 = score_avx2_f64
-  score_avx2_soa_f32 = score_avx2_f64
-  score_avx512_f64 = score_avx2_f64
-  score_avx512_f32 = score_avx2_f64
-  score_avx512_soa_f64 = score_avx2_f64
-  score_avx512_soa_f32 = score_avx2_f64
+    'functions/score/score_stubs.c', include_directories: c2_inc, dependencies: [m_dep, omp_dep])
+endif
+
+# List each static library once.  Repeating one in link_whole makes meson
+# dedupe the archive but keep every -Wl,-force_load on macOS, leaving bare
+# "-force_load" flags that ld64 rejects (GNU ld's --whole-archive is fine).
+if host_machine.cpu_family() == 'x86_64'
+  score_libs = [score_avx2_f64, score_avx2_f32, score_avx2_soa_f64, score_avx2_soa_f32,
+                score_avx512_f64, score_avx512_f32, score_avx512_soa_f64, score_avx512_soa_f32]
+else
+  score_libs = [score_avx2_f64]
 endif
 
 shared_module('_cImageD11',
@@ -201,14 +236,15 @@ shared_module('_cImageD11',
   c_args: c2_c_args,
   cpp_args: c2_cpp_args,
   include_directories: [c2_inc],
-  dependencies: [m_dep],
+  dependencies: [m_dep, omp_dep],
   link_args: c2_link_args,
   link_whole: [sar_sse41_f64, sar_sse41_f32, sar_sse41_soa, sar_sse41_f32soa,
                sar_avx2_f64, sar_avx2_f32, sar_avx2_soa, sar_avx2_f32soa,
-               sar_avx512_f64, sar_avx512_f32, sar_avx512_soa, sar_avx512_f32soa,
-               score_avx2_f64, score_avx2_f32, score_avx2_soa_f64, score_avx2_soa_f32,
-               score_avx512_f64, score_avx512_f32, score_avx512_soa_f64, score_avx512_soa_f32],
+               sar_avx512_f64, sar_avx512_f32, sar_avx512_soa, sar_avx512_f32soa]
+              + score_libs,
   name_prefix: '',
+  # Meson's default module suffix on macOS is not .so; CPython wants .so.
+  name_suffix: host_machine.system() == 'darwin' ? 'so' : [],
   install: false,
 )
 

@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   attach-wheels:
+    # Releases (GitHub assets and PyPI) only come from the central repo;
+    # a release made in a fork does nothing.
+    if: github.repository == 'FABLE-3DXRD/c2ImageD11'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,6 +56,32 @@ jobs:
           if_no_artifact_found: warn
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Download dist-macos-arm64
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: test.yml
+          workflow_conclusion: success
+          branch: master
+          name: dist-macos-arm64
+          path: dist/
+          workflow_search: true
+          if_no_artifact_found: warn
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download dist-macos-x86_64
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: test.yml
+          workflow_conclusion: success
+          branch: master
+          name: dist-macos-x86_64
+          path: dist/
+          workflow_search: true
+          if_no_artifact_found: warn
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Re-upload as artifact (bridge to pypi-publish)
         uses: actions/upload-artifact@v4
         with:
@@ -67,6 +96,7 @@ jobs:
 
   pypi-publish:
     needs: attach-wheels
+    if: github.repository == 'FABLE-3DXRD/c2ImageD11'
     runs-on: ubuntu-latest
     environment:
       name: pypi

@@ -23,7 +23,8 @@ C2PY_END */
 int coverlaps(uint16_t *restrict row1, uint16_t *restrict col1,
               int *restrict labels1, intptr_t nnz1, uint16_t *restrict row2,
               uint16_t *restrict col2, int *restrict labels2, intptr_t nnz2,
-              int *restrict mat, int npk1, int npk2, int *restrict results) {
+              int *restrict mat, intptr_t npk1, intptr_t npk2,
+              int *restrict results) {
     intptr_t i1, i2; int npk;
     uint32_t p1, p2;
     //    printf("nnz %d %d %d %d\n",nnz1,nnz2,npk1,npk2);
