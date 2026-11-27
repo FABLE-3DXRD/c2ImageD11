@@ -204,7 +204,7 @@ meson option on macOS uses meson's `dependency('openmp')` (`auto` = use it if
 the toolchain has one), and only our wheel's CI recipe passes
 `-Dopenmp=disabled`.  All OpenMP use in the C sources must stay behind
 `#ifdef _OPENMP`; `meson setup -Dopenmp=disabled` checks that configuration
-on Linux.  CI builds arm64 (`macos-14`) and x86_64 (`macos-15-intel`) with
+on Linux.  CI builds arm64 (`macos-15`) and x86_64 (`macos-15-intel`) with
 `MACOSX_DEPLOYMENT_TARGET=11.0` and checks the wheel with delocate.
 
 TODO: conda-forge package, threaded on macOS.  conda shares one
