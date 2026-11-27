@@ -10,6 +10,9 @@ permissions:
 
 jobs:
   attach-wheels:
+    # Releases (GitHub assets and PyPI) only come from the central repo;
+    # a release made in a fork does nothing.
+    if: github.repository == 'FABLE-3DXRD/c2ImageD11'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -93,6 +96,7 @@ jobs:
 
   pypi-publish:
     needs: attach-wheels
+    if: github.repository == 'FABLE-3DXRD/c2ImageD11'
     runs-on: ubuntu-latest
     environment:
       name: pypi
