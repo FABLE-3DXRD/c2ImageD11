@@ -17,7 +17,9 @@ shares one OpenMP runtime.  It is present on almost every system with
 gcc installed; minimal container images may need `apt install libgomp1`
 (Debian/Ubuntu), `dnf install libgomp` (RHEL/Fedora) or `apk add libgomp`
 (Alpine).  The Windows wheels bundle `vcomp140.dll` under its original
-name for the same reason.
+name for the same reason.  The macOS wheels (Apple Silicon and Intel,
+macOS 11+) are built without OpenMP and run single-threaded
+(`c2ImageD11.OPENMP` is `False`); they need no extra libraries.
 
 ## Build
 

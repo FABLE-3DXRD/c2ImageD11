@@ -21,11 +21,11 @@ import warnings
 # Arch-aware .so loader
 #
 # The .so files in this directory follow the naming convention:
-#   _cImageD11_{arch}.so   (Linux)
+#   _cImageD11_{arch}.so   (Linux, macOS)
 #   _cImageD11_{arch}.pyd  (Windows)
 #
 # Where {arch} matches platform.machine() output:
-#   x86_64, aarch64, ppc64le, AMD64 (Windows), arm64 (Windows)
+#   x86_64, aarch64, ppc64le, AMD64 (Windows), arm64 (Windows, macOS)
 #
 # The same binary works across Python 2.7-3.14 because c2py23 emits both
 # init_cImageD11 (Py2) and PyInit__cImageD11 (Py3) entry points.

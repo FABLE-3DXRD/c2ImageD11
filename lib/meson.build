@@ -86,6 +86,24 @@ c2_sources_cpp = files(
 
 # Platform-specific compiler and link flags
 is_msvc = cc.get_id() == 'msvc'
+
+# OpenMP: off by default on macOS.  Apple clang has no OpenMP runtime;
+# bundling libomp would put a private copy in every user's process (the
+# same duplication problem as a vendored libgomp), so the macOS wheel is
+# single-threaded.  The C sources guard all OpenMP use with _OPENMP.
+openmp_opt = get_option('openmp').disable_auto_if(host_machine.system() == 'darwin')
+use_openmp = openmp_opt.allowed()
+if use_openmp and host_machine.system() == 'darwin'
+  error('-Dopenmp=enabled is not supported on macOS (needs libomp; see AGENTS.md)')
+endif
+if is_msvc
+  omp_args = use_openmp ? ['/openmp'] : []
+else
+  # Without OpenMP the pragmas are ignored on purpose: silence the warnings
+  # (gcc: -Wunknown-pragmas, clang: -Wsource-uses-openmp).
+  omp_args = use_openmp ? ['-fopenmp'] : cc.get_supported_arguments(
+    '-Wno-unknown-pragmas', '-Wno-source-uses-openmp')
+endif
 if is_msvc
   # /fp:fast contraction breaks (x+MAGIC)-MAGIC rounding trick used
   # by the baseline C/C++.  The AVX2/AVX-512 ISA kernels use nearbyint()
@@ -93,16 +111,16 @@ if is_msvc
   # math.  On GCC/Clang, (x+MAGIC)-MAGIC survives because the baseline is
   # compiled with -O2 (no -ffast-math); never add -ffast-math to the
   # baseline flags or the trick is folded to identity.
-  c2_c_args = ['/openmp', '/O2', '/D_DEFAULT_SOURCE']
-  c2_cpp_args = ['/openmp', '/O2']
+  c2_c_args = omp_args + ['/O2', '/D_DEFAULT_SOURCE']
+  c2_cpp_args = omp_args + ['/O2']
   c2_link_args = []
 else
-  c2_c_args = cc.get_supported_arguments(
-    '-fPIC', '-O2', '-fopenmp', '-D_DEFAULT_SOURCE',
+  c2_c_args = omp_args + cc.get_supported_arguments(
+    '-fPIC', '-O2', '-D_DEFAULT_SOURCE',
     '-Wno-format', '-Wno-incompatible-pointer-types')
-  c2_cpp_args = cpp.get_supported_arguments(
-    '-fPIC', '-O2', '-fopenmp')
-  c2_link_args = ['-lgomp']
+  c2_cpp_args = omp_args + cpp.get_supported_arguments(
+    '-fPIC', '-O2')
+  c2_link_args = use_openmp ? ['-lgomp'] : []
 endif
 
 m_dep = cc.find_library('m', required: false)
@@ -119,15 +137,15 @@ if host_machine.cpu_family() == 'x86_64'
     # would crash on SSE4.1-only CPUs (Penryn).  So SSE4.1 variants use
     # base flags only -- they compile correctly (magic-int rounding) but
     # without the nearbyint fast path.  AVX2/AVX-512 get proper ISA flags.
-    sse41_f64_flags = ['/openmp', '/O2']
-    sse41_f32_flags = ['/openmp', '/O2']
-    avx2_flags      = ['/openmp', '/O2', '/fp:fast', '/arch:AVX2']
-    avx512_flags    = ['/openmp', '/O2', '/fp:fast', '/arch:AVX512']
+    sse41_f64_flags = omp_args + ['/O2']
+    sse41_f32_flags = omp_args + ['/O2']
+    avx2_flags      = omp_args + ['/O2', '/fp:fast', '/arch:AVX2']
+    avx512_flags    = omp_args + ['/O2', '/fp:fast', '/arch:AVX512']
   else
-    sse41_f64_flags = ['-O2',             '-fopenmp', '-fPIC', '-msse4.1']
-    sse41_f32_flags = ['-O3', '-ffast-math', '-fopenmp', '-fPIC', '-msse4.1']
-    avx2_flags      = ['-O3', '-ffast-math', '-fopenmp', '-fPIC', '-mavx2', '-mfma']
-    avx512_flags    = ['-O3', '-ffast-math', '-fopenmp', '-fPIC', '-mavx512f', '-mavx2', '-mfma']
+    sse41_f64_flags = omp_args + ['-O2',                '-fPIC', '-msse4.1']
+    sse41_f32_flags = omp_args + ['-O3', '-ffast-math', '-fPIC', '-msse4.1']
+    avx2_flags      = omp_args + ['-O3', '-ffast-math', '-fPIC', '-mavx2', '-mfma']
+    avx512_flags    = omp_args + ['-O3', '-ffast-math', '-fPIC', '-mavx512f', '-mavx2', '-mfma']
   endif
 else
   # aarch64 / other: base compilation, no ISA flags needed
@@ -209,6 +227,8 @@ shared_module('_cImageD11',
                score_avx2_f64, score_avx2_f32, score_avx2_soa_f64, score_avx2_soa_f32,
                score_avx512_f64, score_avx512_f32, score_avx512_soa_f64, score_avx512_soa_f32],
   name_prefix: '',
+  # Meson's default module suffix on macOS is not .so; CPython wants .so.
+  name_suffix: host_machine.system() == 'darwin' ? 'so' : [],
   install: false,
 )
 
