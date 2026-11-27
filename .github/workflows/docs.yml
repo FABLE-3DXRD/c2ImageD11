@@ -18,7 +18,11 @@ concurrency:
 
 jobs:
   build-docs:
-    if: github.event.workflow_run.conclusion == 'success'
+    # Only the central repo publishes Pages; forks (e.g. jonwright/) skip
+    # this job, and deploy with it.
+    if: >-
+      github.repository == 'FABLE-3DXRD/c2ImageD11' &&
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
