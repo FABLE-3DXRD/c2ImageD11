@@ -12,7 +12,7 @@
 #   ./tools/release.sh --help       # show help
 #
 # Requirements:
-#   - gh CLI authenticated to jonwright/c2ImageD11
+#   - gh CLI authenticated to FABLE-3DXRD/c2ImageD11
 #   - (your existing PAT is sufficient)
 #
 # Wheel matrix (all produced by CI except ppc64le):
@@ -28,7 +28,7 @@
 
 set -euo pipefail
 
-REPO="jonwright/c2ImageD11"
+REPO="FABLE-3DXRD/c2ImageD11"
 OUTDIR="dist"
 
 # workflow_name:artifact_name:description
@@ -160,7 +160,7 @@ echo "Set up Trusted Publisher (OIDC  --  no token needed):"
 echo "  1. Go to https://pypi.org/manage/account/publishing/"
 echo "  2. Add a pending publisher:"
 echo "       PyPI Project: c2ImageD11"
-echo "       Owner: jonwright"
+echo "       Owner: FABLE-3DXRD"
 echo "       Repository: c2ImageD11"
 echo "       Workflow name: publish.yml"
 echo "       Environment: pypi-publish"
@@ -184,7 +184,7 @@ echo ""
 echo "No CI runner available for ppc64le."
 echo "Build manually on a ppc64le machine:"
 echo ""
-echo "  git clone https://github.com/jonwright/c2ImageD11.git"
+echo "  git clone https://github.com/FABLE-3DXRD/c2ImageD11.git"
 echo "  cd c2ImageD11"
 echo "  pip install meson ninja numpy setuptools wheel auditwheel"
 echo "  mkdir -p build/libc2ImageD11 && cd build/libc2ImageD11"

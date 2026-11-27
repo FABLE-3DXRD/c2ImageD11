@@ -1,7 +1,7 @@
 site_name: c2ImageD11
 site_description: Standalone C extensions for ImageD11 (c2py23 binding) -- v0.4.5 (47d72da)
-repo_url: https://github.com/jonwright/c2ImageD11
-repo_name: jonwright/c2ImageD11
+repo_url: https://github.com/FABLE-3DXRD/c2ImageD11
+repo_name: FABLE-3DXRD/c2ImageD11
 docs_dir: .
 site_dir: ../site
 theme:
@@ -30,7 +30,7 @@ theme:
 plugins:
   - search
 
-copyright: Built from commit <a href="https://github.com/jonwright/c2ImageD11/commit/47d72dab618312d4b49f3ec4793fd6b227e39815"><code>47d72da</code></a> (v0.4.5)
+copyright: Built from commit <a href="https://github.com/FABLE-3DXRD/c2ImageD11/commit/47d72dab618312d4b49f3ec4793fd6b227e39815"><code>47d72da</code></a> (v0.4.5)
 
 markdown_extensions:
   - pymdownx.highlight

@@ -559,8 +559,8 @@ def write_mkdocs_nav(functions, meta=None):
 
     nav = """site_name: c2ImageD11
 site_description: Standalone C extensions for ImageD11 (c2py23 binding) -- v{} ({})
-repo_url: https://github.com/jonwright/c2ImageD11
-repo_name: jonwright/c2ImageD11
+repo_url: https://github.com/FABLE-3DXRD/c2ImageD11
+repo_name: FABLE-3DXRD/c2ImageD11
 docs_dir: .
 site_dir: ../site
 theme:
@@ -589,7 +589,7 @@ theme:
 plugins:
   - search
 
-copyright: Built from commit <a href="https://github.com/jonwright/c2ImageD11/commit/{}"><code>{}</code></a> (v{})
+copyright: Built from commit <a href="https://github.com/FABLE-3DXRD/c2ImageD11/commit/{}"><code>{}</code></a> (v{})
 
 markdown_extensions:
   - pymdownx.highlight

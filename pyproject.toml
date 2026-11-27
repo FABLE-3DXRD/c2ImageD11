@@ -26,9 +26,9 @@ dependencies = []
 test = ["numpy"]
 
 [project.urls]
-Homepage = "https://github.com/jonwright/c2ImageD11"
-Source = "https://github.com/jonwright/c2ImageD11"
-"Bug tracker" = "https://github.com/jonwright/c2ImageD11/issues"
+Homepage = "https://github.com/FABLE-3DXRD/c2ImageD11"
+Source = "https://github.com/FABLE-3DXRD/c2ImageD11"
+"Bug tracker" = "https://github.com/FABLE-3DXRD/c2ImageD11/issues"
 
 [tool.setuptools]
 license-files = []
