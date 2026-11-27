@@ -1,4 +1,4 @@
 option('regenerate', type: 'boolean', value: false,
        description: 'Regenerate interface files from C2PY_BEGIN blocks in C sources.  Requires c2py23.  Used by CI to catch upstream breakage.  Default false: use pre-generated files checked into git (sdist/release mode).')
 option('openmp', type: 'feature', value: 'auto',
-       description: 'Build with OpenMP.  auto = enabled everywhere except macOS, where Apple clang ships no OpenMP runtime and we choose not to bundle libomp.  disabled = single-threaded build (also useful to test that configuration on Linux).')
+       description: 'Build with OpenMP.  Linux/Windows: auto = enabled.  macOS: auto = enabled if the toolchain provides an OpenMP runtime (e.g. conda-forge llvm-openmp), else single-threaded; enabled = require it.  disabled = single-threaded everywhere (our macOS pip wheel uses this).')

@@ -197,14 +197,21 @@ on minimal images; we judged that less bad than always duplicating it, so
 the balance changes.  On Windows, delvewheel runs with `--no-mangle-all`:
 `vcomp140.dll` is bundled but keeps its name, so packages share one copy.
 
-**macOS wheels have no OpenMP** (same trade-off).  Apple clang ships no
-OpenMP runtime, and bundling libomp would be the duplicated-runtime problem
-again, so `lib/meson.build`'s `openmp` option defaults to disabled on Darwin
-and the wheel is single-threaded.  All OpenMP use in the C sources must stay
-behind `#ifdef _OPENMP`; `meson setup -Dopenmp=disabled` checks that
-configuration on Linux.  CI builds arm64 (`macos-14`) and x86_64
-(`macos-15-intel`) with `MACOSX_DEPLOYMENT_TARGET=11.0` and checks the wheel
-with delocate.  Revisit if Mac users need the threads.
+**The macOS pip wheel has no OpenMP** (same trade-off).  Apple clang ships
+no OpenMP runtime, and bundling libomp would be the duplicated-runtime
+problem again.  This is a packaging choice, not a code limit: the `openmp`
+meson option on macOS uses meson's `dependency('openmp')` (`auto` = use it if
+the toolchain has one), and only our wheel's CI recipe passes
+`-Dopenmp=disabled`.  All OpenMP use in the C sources must stay behind
+`#ifdef _OPENMP`; `meson setup -Dopenmp=disabled` checks that configuration
+on Linux.  CI builds arm64 (`macos-14`) and x86_64 (`macos-15-intel`) with
+`MACOSX_DEPLOYMENT_TARGET=11.0` and checks the wheel with delocate.
+
+TODO: conda-forge package, threaded on macOS.  conda shares one
+`llvm-openmp` per environment, so no duplication.  The recipe should only
+need `-Dopenmp=enabled` with `llvm-openmp` in host requirements; if it needs
+a change to our code or meson files, treat that as a bug here.
+
 The `.so` binary works across Python 2.7-3.14 (c2py23 emits both
 `init_cImageD11` and `PyInit__cImageD11`). The `__init__.py` loader detects
 the Python version and uses `imp.load_dynamic` (Py2) or `importlib` (Py3).

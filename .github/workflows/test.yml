@@ -209,9 +209,10 @@ jobs:
           cd %TEMP% && python %GITHUB_WORKSPACE%\lib\functions\score_and_refine\bench.py
         continue-on-error: true
 
-  # macOS wheels are built WITHOUT OpenMP (single-threaded): Apple clang
-  # has no OpenMP runtime, and bundling libomp would put a private copy in
-  # every user's process.  See the openmp option in lib/meson.build.
+  # The macOS pip wheels are built WITHOUT OpenMP (single-threaded): Apple
+  # clang has no OpenMP runtime, and bundling libomp would put a private
+  # copy in every user's process.  The code itself supports OpenMP on
+  # macOS (see the openmp option in lib/meson.build), e.g. for conda-forge.
   macos-wheel:
     strategy:
       fail-fast: false
@@ -236,10 +237,12 @@ jobs:
         run: |
           pip install meson ninja "setuptools>=70.1" delocate
 
-      - name: Build .so with meson (no OpenMP on macOS)
+      - name: Build .so with meson (no OpenMP for the pip wheel)
         run: |
           test "$(python -c 'import platform; print(platform.machine())')" = "${{ matrix.arch }}"
-          meson setup build/libc2ImageD11 lib
+          # Explicit: on macOS 'auto' would pick up a libomp if one is on
+          # the search path, and delocate would then bundle it.
+          meson setup -Dopenmp=disabled build/libc2ImageD11 lib
           ninja -C build/libc2ImageD11
           SO=c2ImageD11/_cImageD11_${{ matrix.arch }}.so
           cp build/libc2ImageD11/_cImageD11.so $SO
