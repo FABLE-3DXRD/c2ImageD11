@@ -119,6 +119,7 @@ c2ImageD11/
   tools/
     harvester.py         # Regenerates lib/interface/ from C sources + c2py23
     strip_c2py.py        # Removes C2PY_BLOCKs to verify C code unchanged
+    check_prototypes.py  # CI: C definitions must match the wrapper prototypes
     test_build_once.sh   # Legacy CI helper (needs apptainer)
 
   .github/

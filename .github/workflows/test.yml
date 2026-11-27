@@ -30,6 +30,12 @@ jobs:
           ninja
           cp _cImageD11.so ../../c2ImageD11/_cImageD11_x86_64.so
 
+      - name: Check C definitions match the wrapper prototypes
+        run: |
+          # A mismatch (e.g. int vs intptr_t) can pass here and break on
+          # another ABI, as coverlaps did on Apple arm64.  Needs gcc.
+          python tools/check_prototypes.py build/libc2ImageD11
+
       - name: Build wheel
         run: |
           python setup.py bdist_wheel
