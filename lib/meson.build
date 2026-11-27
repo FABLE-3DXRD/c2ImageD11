@@ -218,13 +218,16 @@ else
   # non-x86_64: stub symbols that delegate to scalar loops
   score_avx2_f64 = static_library('score_avx2_f64',
     'functions/score/score_stubs.c', include_directories: c2_inc, dependencies: [m_dep, omp_dep])
-  score_avx2_f32   = score_avx2_f64
-  score_avx2_soa_f64 = score_avx2_f64
-  score_avx2_soa_f32 = score_avx2_f64
-  score_avx512_f64 = score_avx2_f64
-  score_avx512_f32 = score_avx2_f64
-  score_avx512_soa_f64 = score_avx2_f64
-  score_avx512_soa_f32 = score_avx2_f64
+endif
+
+# List each static library once.  Repeating one in link_whole makes meson
+# dedupe the archive but keep every -Wl,-force_load on macOS, leaving bare
+# "-force_load" flags that ld64 rejects (GNU ld's --whole-archive is fine).
+if host_machine.cpu_family() == 'x86_64'
+  score_libs = [score_avx2_f64, score_avx2_f32, score_avx2_soa_f64, score_avx2_soa_f32,
+                score_avx512_f64, score_avx512_f32, score_avx512_soa_f64, score_avx512_soa_f32]
+else
+  score_libs = [score_avx2_f64]
 endif
 
 shared_module('_cImageD11',
@@ -237,9 +240,8 @@ shared_module('_cImageD11',
   link_args: c2_link_args,
   link_whole: [sar_sse41_f64, sar_sse41_f32, sar_sse41_soa, sar_sse41_f32soa,
                sar_avx2_f64, sar_avx2_f32, sar_avx2_soa, sar_avx2_f32soa,
-               sar_avx512_f64, sar_avx512_f32, sar_avx512_soa, sar_avx512_f32soa,
-               score_avx2_f64, score_avx2_f32, score_avx2_soa_f64, score_avx2_soa_f32,
-               score_avx512_f64, score_avx512_f32, score_avx512_soa_f64, score_avx512_soa_f32],
+               sar_avx512_f64, sar_avx512_f32, sar_avx512_soa, sar_avx512_f32soa]
+              + score_libs,
   name_prefix: '',
   # Meson's default module suffix on macOS is not .so; CPython wants .so.
   name_suffix: host_machine.system() == 'darwin' ? 'so' : [],
